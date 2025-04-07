@@ -1,3 +1,4 @@
+// use console.error because stdout cannot be used in MCP server
 import c from "picocolors"
 
 type LoggerLevel = "silent" | "warn"
@@ -11,12 +12,12 @@ class Logger {
 
   info(...args: any[]): void {
     if (this.level === "silent") return
-    console.info(c.cyan("INFO"), ...args)
+    console.error(c.cyan("INFO"), ...args)
   }
 
   warn(...args: any[]): void {
     if (this.level === "silent") return
-    console.warn(c.yellow("WARN"), ...args)
+    console.error(c.yellow("WARN"), ...args)
   }
 }
 

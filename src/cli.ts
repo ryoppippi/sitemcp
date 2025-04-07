@@ -1,11 +1,10 @@
-import path from "node:path"
-import fs from "node:fs"
 import { cac } from "cac"
-import { encode } from "gpt-tokenizer/model/gpt-4o"
-import { fetchSite, serializePages } from "./index.ts"
+import { fetchSite } from "./index.ts"
 import { logger } from "./logger.ts"
-import { ensureArray, formatNumber } from "./utils.ts"
+import { ensureArray } from "./utils.ts"
 import { version } from "../package.json"
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 const cli = cac("sitemcp")
 
@@ -25,7 +24,7 @@ cli
       return
     }
 
-    // set warn for mcp servers
+    // use console.error because stdout cannot be used in MCP server
     logger.setLevel("warn")
 
     const pages = await fetchSite(url, {
@@ -35,35 +34,38 @@ cli
       limit: flags.limit,
     })
 
+
+    // create server instance
+    const server = new McpServer({
+      name: `mcp server for ${url}`,
+      version,
+    });
+
     if (pages.size === 0) {
       logger.warn("No pages found")
       return
     }
 
-    const pagesArr = [...pages.values()]
-
-    const totalTokenCount = pagesArr.reduce(
-      (acc, page) => acc + encode(page.content).length,
-      0
+    for(const page of pages.values()) {
+      server.tool(
+        `getDocumentOf-${page.url}`,
+        `get page content: ${page.title}`,
+        async () => {
+          return {
+            content:[
+              {
+                type: "text",
+                text: page.content,
+              }
+            ]
+          }
+        },
     )
-
-    logger.info(
-      `Total token count for ${pages.size} pages: ${formatNumber(
-        totalTokenCount
-      )}`
-    )
-
-    if (flags.outfile) {
-      const output = serializePages(
-        pages,
-        flags.outfile.endsWith(".json") ? "json" : "text"
-      )
-      fs.mkdirSync(path.dirname(flags.outfile), { recursive: true })
-      fs.writeFileSync(flags.outfile, output, "utf8")
-    } else {
-      console.log(serializePages(pages, "text"))
-    }
-  })
+  }
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("MCP Server running on stdio");
+ })
 
 cli.version(version)
 cli.help()
