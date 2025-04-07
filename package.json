@@ -1,5 +1,5 @@
 {
-  "version": "0.0.17",
+  "version": "0.1.0",
   "name": "sitemcp",
   "description": "Fetch an entire site and save it as a text file",
   "bin": "./dist/cli.mjs",
