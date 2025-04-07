@@ -87,21 +87,28 @@ cli
 
       logger.info(`Registering tool ${name} (${description})`)
 
-      server.tool(
-        name,
-        description,
-        async () => {
-          return {
-            content:[
-              {
-                type: "text",
-                text: page.content,
-              }
-            ]
-          }
-        },
-    )
-  }
+      try {
+        server.tool(
+          name,
+          description,
+          async () => {
+            return {
+              content:[
+                {
+                  type: "text",
+                  text: page.content,
+                }
+              ]
+            }
+          },
+        )
+      } catch(_e) {
+        const e = _e as Error;
+        if (e.message.includes("already registered")) {
+          logger.warn(`Tool ${name} already registered, skipping`)
+        }
+      }
+ }
   const transport = new StdioServerTransport();
   await server.connect(transport);
   logger.info("MCP Server running on stdio");
