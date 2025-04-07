@@ -8,7 +8,7 @@
   ],
   "type": "module",
   "scripts": {
-    "release": "bumpp",
+    "release": "bumpp && npm publish --access public",
     "build": "tsdown",
     "start": "node ./dist/cli.mjs",
     "prepack": "bun run build"
