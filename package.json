@@ -1,6 +1,6 @@
 {
-  "name": "sitefetch",
   "version": "0.0.17",
+  "name": "sitemcp",
   "description": "Fetch an entire site and save it as a text file",
   "bin": "./dist/cli.mjs",
   "files": [
