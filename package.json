@@ -8,9 +8,10 @@
   ],
   "type": "module",
   "scripts": {
+    "release": "bumpp",
     "build": "tsdown",
     "start": "node ./dist/cli.mjs",
-    "prepublishOnly": "bun run build"
+    "prepack": "bun run build"
   },
   "keywords": [],
   "author": "ryoppippi",
@@ -29,6 +30,7 @@
     "@types/bun": "^1.1.15",
     "@types/micromatch": "^4.0.9",
     "@types/turndown": "^5.0.5",
+    "bumpp": "^10.1.0",
     "cac": "^6.7.14",
     "p-queue": "^8.0.1",
     "picocolors": "^1.1.1",
