@@ -38,19 +38,25 @@ cli
 
     const sanitizedUrl = sanitizeUrl(url)
     const catchDir = cacheDirectory();
+    const cacheFile = path.join(catchDir, `${sanitizedUrl}.json`)
 
     let pages: FetchSiteResult | undefined = undefined
 
-    if(!flags.noCache) {
+    if(flags.noCache !== true) {
       // check if cache exists
-      const cacheFile = path.join(catchDir, `${sanitizedUrl}.json`)
       if (fs.existsSync(cacheFile)) {
         logger.info("Using cache file", cacheFile)
-        pages = JSON.parse(fs.readFileSync(cacheFile, "utf-8"))
+        const json = fs.readFileSync(cacheFile, "utf-8")
+        try {
+          pages = new Map(Object.entries(JSON.parse(json)))
+        } catch (e) {
+          logger.warn("Cache file is invalid, ignoring")
+          pages = undefined
+        }
       }
     }
 
-    if (!pages) {
+    if (pages == null) {
       pages = await fetchSite(url, {
         concurrency: flags.concurrency,
         match: flags.match && ensureArray(flags.match),
@@ -59,20 +65,20 @@ cli
       })
     }
 
-    if (!flags.noCache) {
-      // create cache dir if not exists
-      if (!fs.existsSync(catchDir)) {
-        fs.mkdirSync(catchDir, { recursive: true })
-      }
-      // write to cache file
-      const cacheFile = path.join(catchDir, `${sanitizedUrl}.json`)
-      fs.writeFileSync(cacheFile, JSON.stringify(pages, null, 2))
-      logger.info("Cache file written to", cacheFile)
-    }
-
     if (pages.size === 0) {
       logger.warn("No pages found")
       return
+    }
+
+    if (flags.noCache !== true) {
+      // create cache dir if not exists
+      if (!fs.existsSync(catchDir)) {
+        fs.promises.mkdir(catchDir, { recursive: true })
+      }
+      // write to cache file
+      const json = JSON.stringify(Object.fromEntries(pages), null, 2)
+      await fs.promises.writeFile(cacheFile, json, "utf-8")
+      logger.info("Cache file written to", cacheFile)
     }
 
     for(const page of pages.values()) {
