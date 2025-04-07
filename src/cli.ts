@@ -7,7 +7,7 @@ import { logger } from "./logger.ts"
 import { ensureArray, formatNumber } from "./utils.ts"
 import { version } from "../package.json"
 
-const cli = cac("sitefetch")
+const cli = cac("sitemcp")
 
 cli
   .command("[url]", "Fetch a site")
