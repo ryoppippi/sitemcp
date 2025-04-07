@@ -93,7 +93,7 @@ cli
   }
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("MCP Server running on stdio");
+  logger.info("MCP Server running on stdio");
  })
 
 cli.version(version)
