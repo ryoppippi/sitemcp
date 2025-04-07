@@ -41,3 +41,11 @@ export function sanitizeUrl(url: string): string {
     // remove leading and trailing dashes
     .replace(/^-+|-+$/g, '')
 }
+
+export function sanitizeToolName(name: string): string {
+  // Remove common URL prefixes and invalid characters
+  return `getDocumentOf-${name}`
+    .replace(/^https?:\/\//, '')         // Remove http:// or https://
+    .replace(/[^a-zA-Z0-9_-]/g, '_')     // Replace invalid chars with underscore
+    .substring(0, 64);                    // Limit to 64 characters
+}

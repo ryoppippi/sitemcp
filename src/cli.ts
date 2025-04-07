@@ -3,7 +3,7 @@ import * as path from 'node:path'
 import { cac } from "cac"
 import { fetchSite } from "./index.ts"
 import { logger } from "./logger.ts"
-import { cacheDirectory, ensureArray, sanitizeUrl } from "./utils.ts"
+import { cacheDirectory, ensureArray, sanitizeToolName, sanitizeUrl } from "./utils.ts"
 import { version } from "../package.json"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -82,7 +82,7 @@ cli
     }
 
     for(const page of pages.values()) {
-      const name = `getDocumentOf-${page.url}` as const 
+      const name = sanitizeToolName(page.url)
       const description = `get page content: ${page.title}` as const
 
       logger.info(`Registering tool ${name} (${description})`)
