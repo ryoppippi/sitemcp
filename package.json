@@ -10,13 +10,12 @@
   ],
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rm -rf dist && rolldown -c",
     "start": "node ./dist/cli.js",
     "prepublishOnly": "bun run build"
   },
   "keywords": [],
-  "author": "EGOIST <hi@egoist.dev>",
+  "author": "ryoppippi",
   "license": "MIT",
   "dependencies": {
     "happy-dom": "^16.5.3",
