@@ -82,9 +82,14 @@ cli
     }
 
     for(const page of pages.values()) {
+      const name = `getDocumentOf-${page.url}` as const 
+      const description = `get page content: ${page.title}` as const
+
+      logger.info(`Registering tool ${name} (${description})`)
+
       server.tool(
-        `getDocumentOf-${page.url}`,
-        `get page content: ${page.title}`,
+        name,
+        description,
         async () => {
           return {
             content:[
