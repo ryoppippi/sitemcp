@@ -25,9 +25,8 @@ cli
       return
     }
 
-    if (flags.silent) {
-      logger.setLevel("silent")
-    }
+    // set warn for mcp servers
+    logger.setLevel("warn")
 
     const pages = await fetchSite(url, {
       concurrency: flags.concurrency,

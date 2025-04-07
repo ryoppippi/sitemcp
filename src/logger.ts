@@ -11,7 +11,7 @@ class Logger {
 
   info(...args: any[]): void {
     if (this.level === "silent") return
-    console.log(c.cyan("INFO"), ...args)
+    console.info(c.cyan("INFO"), ...args)
   }
 
   warn(...args: any[]): void {
