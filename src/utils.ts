@@ -1,6 +1,7 @@
 import * as os from 'node:os'
 import * as process from 'node:process'
 import * as path from 'node:path'
+import * as ufo from 'ufo'
 import micromatch from "micromatch"
 
 // xK or xM
@@ -26,3 +27,17 @@ export function cacheDirectory(): string {
     : path.resolve(os.homedir(), '.cache/sitemcp')
  }
 
+
+export function sanitizeUrl(url: string): string {
+  const withoutProtocol = ufo.withoutProtocol(url)
+
+  return withoutProtocol
+    // replace all non-alphanumeric characters with a dash
+    .replace(/[^a-zA-Z0-9]/g, '-')
+    // replace / with a dash
+    .replace(/\//g, '-')
+    // replace multiple dashes with a single dash
+    .replace(/--+/g, '-')
+    // remove leading and trailing dashes
+    .replace(/^-+|-+$/g, '')
+}

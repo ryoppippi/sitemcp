@@ -36,6 +36,7 @@
     "picocolors": "^1.1.1",
     "tsdown": "^0.6.10",
     "typescript": "^5.7.3",
+    "ufo": "^1.6.0",
     "unplugin-isolated-decl": "^0.10.4"
   }
 }
