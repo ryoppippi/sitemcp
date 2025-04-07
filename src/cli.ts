@@ -13,7 +13,6 @@ const cli = cac("sitemcp")
 
 cli
   .command("[url]", "Fetch a site")
-  .option("-o, --outfile <path>", "Write the fetched site to a text file")
   .option("--concurrency <number>", "Number of concurrent requests", {
     default: 3,
   })
