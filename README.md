@@ -73,6 +73,7 @@ The below example configuration for Claude Desktop
       "command": "npx",
       "args": [
         "sitemcp",
+        "https://daisyui.com",
         "-m",
         "/components/**",
       ]
