@@ -13,7 +13,7 @@ https://github.com/user-attachments/assets/c72100bd-df48-4b22-8cd3-75cc2dcdbefb
 
 
 > [!NOTE]
-> `sitemcp` is a fork of [`sitemcp`](https://github.com/egoist/sitefetch) by [@egoist](https://github.com/egoist)
+> `sitemcp` is a fork of [`sitefetch`](https://github.com/egoist/sitefetch) by [@egoist](https://github.com/egoist)
 
 ## Install
 
