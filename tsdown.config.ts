@@ -6,7 +6,10 @@ const config: ReturnType<typeof defineConfig> = defineConfig({
   fixedExtension: true,
   dts: true,
   clean: true,
-  bundleDts: true
+  bundleDts: true,
+  outputOptions:{
+    banner: "#!/usr/bin/env node\n",
+ }
 })
 
 export default config
