@@ -1,7 +1,7 @@
 {
   "version": "0.1.0",
   "name": "sitemcp",
-  "description": "Fetch an entire site and save it as a text file",
+  "description": "Fetch an entire site and use it as a MCP Server",
   "bin": "./dist/cli.mjs",
   "files": [
     "dist"
