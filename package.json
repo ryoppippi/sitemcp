@@ -1,43 +1,44 @@
 {
-  "version": "0.1.1",
-  "name": "sitemcp",
-  "description": "Fetch an entire site and use it as a MCP Server",
-  "bin": "./dist/cli.mjs",
-  "files": [
-    "dist"
-  ],
-  "type": "module",
-  "scripts": {
-    "release": "bumpp && npm publish --access public",
-    "build": "tsdown",
-    "start": "node ./dist/cli.mjs",
-    "prepack": "bun run build"
-  },
-  "keywords": [],
-  "author": "ryoppippi",
-  "license": "MIT",
-  "dependencies": {
-    "happy-dom": "^16.5.3",
-    "cheerio": "^1.0.0",
-    "gpt-tokenizer": "^2.8.1",
-    "turndown": "^7.2.0",
-    "turndown-plugin-gfm": "^1.0.2",
-    "micromatch": "^4.0.8"
-  },
-  "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.9.0",
-    "@mozilla/readability": "^0.5.0",
-    "@types/bun": "^1.1.15",
-    "@types/micromatch": "^4.0.9",
-    "@types/turndown": "^5.0.5",
-    "bumpp": "^10.1.0",
-    "cac": "^6.7.14",
-    "p-queue": "^8.0.1",
-    "picocolors": "^1.1.1",
-    "publint": "^0.3.10",
-    "tsdown": "^0.6.10",
-    "typescript": "^5.7.3",
-    "ufo": "^1.6.0",
-    "unplugin-isolated-decl": "^0.10.4"
-  }
+	"version": "0.1.1",
+	"name": "sitemcp",
+	"description": "Fetch an entire site and use it as a MCP Server",
+	"bin": "./dist/cli.mjs",
+	"files": ["dist"],
+	"type": "module",
+	"scripts": {
+		"release": "bumpp && npm publish --access public",
+		"build": "tsdown",
+		"start": "node ./dist/cli.mjs",
+		"prepack": "bun run build",
+		"lint": "biome check .",
+		"format": "biome check --write ."
+	},
+	"keywords": [],
+	"author": "ryoppippi",
+	"license": "MIT",
+	"dependencies": {
+		"happy-dom": "^16.5.3",
+		"cheerio": "^1.0.0",
+		"gpt-tokenizer": "^2.8.1",
+		"turndown": "^7.2.0",
+		"turndown-plugin-gfm": "^1.0.2",
+		"micromatch": "^4.0.8"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@modelcontextprotocol/sdk": "^1.9.0",
+		"@mozilla/readability": "^0.5.0",
+		"@types/bun": "^1.1.15",
+		"@types/micromatch": "^4.0.9",
+		"@types/turndown": "^5.0.5",
+		"bumpp": "^10.1.0",
+		"cac": "^6.7.14",
+		"p-queue": "^8.0.1",
+		"picocolors": "^1.1.1",
+		"publint": "^0.3.10",
+		"tsdown": "^0.6.10",
+		"typescript": "^5.7.3",
+		"ufo": "^1.6.0",
+		"unplugin-isolated-decl": "^0.10.4"
+	}
 }

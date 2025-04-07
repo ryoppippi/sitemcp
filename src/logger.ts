@@ -1,24 +1,24 @@
 // use console.error because stdout cannot be used in MCP server
-import c from "picocolors"
+import c from "picocolors";
 
-type LoggerLevel = "silent" | "warn"
+type LoggerLevel = "silent" | "warn";
 
 class Logger {
-  private level?: LoggerLevel
+	private level?: LoggerLevel;
 
-  setLevel(level: LoggerLevel): void {
-    this.level = level
-  }
+	setLevel(level: LoggerLevel): void {
+		this.level = level;
+	}
 
-  info(...args: any[]): void {
-    if (this.level === "silent") return
-    console.error(c.cyan("INFO"), ...args)
-  }
+	info(...args: unknown[]): void {
+		if (this.level === "silent") return;
+		console.error(c.cyan("INFO"), ...args);
+	}
 
-  warn(...args: any[]): void {
-    if (this.level === "silent") return
-    console.error(c.yellow("WARN"), ...args)
-  }
+	warn(...args: unknown[]): void {
+		if (this.level === "silent") return;
+		console.error(c.yellow("WARN"), ...args);
+	}
 }
 
-export const logger: Logger = new Logger()
+export const logger: Logger = new Logger();

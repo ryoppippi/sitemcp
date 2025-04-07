@@ -1,28 +1,28 @@
 {
-    "compilerOptions": {
-      // Enable latest features
-      "lib": ["ESNext"],
-      "target": "ESNext",
-      "module": "ESNext",
-      "moduleDetection": "force",
-      "jsx": "react-jsx",
-      "isolatedDeclarations": true,
-      "declaration": true,
-  
-      // Bundler mode
-      "moduleResolution": "bundler",
-      "allowImportingTsExtensions": true,
-      "verbatimModuleSyntax": true,
-      "noEmit": true,
-  
-      // Best practices
-      "strict": true,
-      "skipLibCheck": true,
-      "noFallthroughCasesInSwitch": true,
-  
-      // Some stricter flags
-      "noUnusedLocals": true,
-      "noUnusedParameters": true,
-      "noPropertyAccessFromIndexSignature": true
-    }
-  }
+	"compilerOptions": {
+		// Enable latest features
+		"lib": ["ESNext"],
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleDetection": "force",
+		"jsx": "react-jsx",
+		"isolatedDeclarations": true,
+		"declaration": true,
+
+		// Bundler mode
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"verbatimModuleSyntax": true,
+		"noEmit": true,
+
+		// Best practices
+		"strict": true,
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+
+		// Some stricter flags
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noPropertyAccessFromIndexSignature": true
+	}
+}
