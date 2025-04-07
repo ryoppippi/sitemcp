@@ -12,6 +12,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rm -rf dist && rolldown -c",
+    "start": "node ./dist/cli.js",
     "prepublishOnly": "bun run build"
   },
   "keywords": [],
