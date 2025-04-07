@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "sitemcp",
   "description": "Fetch an entire site and use it as a MCP Server",
   "bin": "./dist/cli.mjs",
