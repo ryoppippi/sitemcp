@@ -82,7 +82,7 @@ class Fetcher {
 
     const res = await (this.options.fetch || fetch)(url, {
       headers: {
-        "user-agent": "Sitefetch (https://github.com/egoist/sitefetch)",
+        "user-agent": "Sitefetch (https://github.com/ryoppippi/sitemcp)",
       },
     })
 
