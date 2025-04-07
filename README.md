@@ -4,6 +4,14 @@ Fetch an entire site and use it as a MCP Server
 
 https://github.com/user-attachments/assets/c72100bd-df48-4b22-8cd3-75cc2dcdbefb
 
+<details>
+  <summary><bold>Ask about my blog content via Claude Desktop(Japanese)</bold></summary>
+
+![SCR-20250407-tzou](https://github.com/user-attachments/assets/a1ebc506-e4e3-4efd-b571-331ee94dfcaf)
+
+</details>
+
+
 > [!NOTE]
 > `sitemcp` is a fork of [`sitemcp`](https://github.com/egoist/sitefetch) by [@egoist](https://github.com/egoist)
 
