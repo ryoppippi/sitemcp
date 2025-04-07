@@ -1,3 +1,6 @@
+import * as os from 'node:os'
+import * as process from 'node:process'
+import * as path from 'node:path'
 import micromatch from "micromatch"
 
 // xK or xM
@@ -16,3 +19,10 @@ export function matchPath(path: string, pattern: string | string[]): boolean {
 export function ensureArray<T>(input: T | T[]): T[] {
   return Array.isArray(input) ? input : [input]
 }
+
+export function cacheDirectory(): string {
+  return process.env['XDG_CACHE_HOME']
+    ? path.resolve(process.env['XDG_CACHE_HOME'], 'sitemcp')
+    : path.resolve(os.homedir(), '.cache/sitemcp')
+ }
+
