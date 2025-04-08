@@ -72,6 +72,7 @@ The below example configuration for Claude Desktop
     "daisy-ui": {
       "command": "npx",
       "args": [
+        "-y",
         "sitemcp",
         "https://daisyui.com",
         "-m",
