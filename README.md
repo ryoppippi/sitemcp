@@ -2,12 +2,12 @@
 
 Fetch an entire site and use it as a MCP Server
 
-https://github.com/user-attachments/assets/c72100bd-df48-4b22-8cd3-75cc2dcdbefb
+https://github.com/user-attachments/assets/ebe2d7c6-4ddc-4a37-8e1e-d80fac49d8ae
 
 <details>
-  <summary><bold>Ask about my blog content via Claude Desktop(Japanese)</bold></summary>
+  <summary><bold>Demo in Japanese</bold></summary>
 
-![SCR-20250407-tzou](https://github.com/user-attachments/assets/a1ebc506-e4e3-4efd-b571-331ee94dfcaf)
+https://github.com/user-attachments/assets/24288140-be2a-416c-9e7c-c49be056a373
 
 </details>
 
