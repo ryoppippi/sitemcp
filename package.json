@@ -6,7 +6,7 @@
 	"files": ["dist"],
 	"type": "module",
 	"scripts": {
-		"release": "bumpp && npm publish --access public",
+		"release": "bun run build && bun lint && bumpp && npm publish --access public",
 		"build": "tsdown",
 		"start": "node ./dist/cli.mjs",
 		"prepack": "bun run build",
