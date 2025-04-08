@@ -32,7 +32,7 @@ export async function startServer(
 		match,
 		contentSelector,
 		limit,
-		cache,
+		cache = false,
 	} = options;
 
 	// create server instance
