@@ -101,18 +101,58 @@ export async function startServer(
 		`
 Get index of ${url}. 
 Before accessing the ${getDocumentServerName} tool, please call this tool first to get the list of pages.
+If the content is too long, you can use the \`max_length\` and \`start_index\` parameters to limit the content.
 `,
-		async () => {
-			const index = Array.from(pages).map(([key, page]) => ({
+		{
+			max_length: z
+				.number()
+				.default(100)
+				.describe("The max length of the index to return"),
+			start_index: z
+				.number()
+				.default(0)
+				.describe("The starting index of the index to return"),
+		},
+		async ({ start_index, max_length }) => {
+			let index = Array.from(pages).map(([key, page]) => ({
 				subpath: key,
 				title: page.title,
 			}));
+			let remainingIndexLength = 0;
+
+			if (start_index > 0) {
+				index = index.slice(start_index);
+			}
+
+			if (max_length > 0) {
+				const newIndex = index.slice(0, max_length);
+				if (newIndex !== index) {
+					remainingIndexLength = index.length - newIndex.length;
+				}
+				index = newIndex;
+			}
+
+			if (index.length === 0) {
+				logger.warn("No pages found");
+				return {
+					content: [
+						{
+							type: "text",
+							text: "No pages found",
+						},
+					],
+				};
+			}
 
 			return {
 				content: [
 					{
 						type: "text",
-						text: stringify(index),
+						text: stringify({
+							index,
+							remainingIndexLength,
+							startIndex: start_index,
+						}),
 					},
 				],
 			};
@@ -125,29 +165,61 @@ Before accessing the ${getDocumentServerName} tool, please call this tool first 
 		`
 Get page contents belonging to ${url}. 
 Before accessing this tool, please call the ${indexServerName} tool first to get the list of pages.
-This tool will return the content of the page from multiple subpaths.
+This tool will return the content of the page from subpath.
+If the content is too long, you can use the \`max_length\` and \`start_index\` parameters to limit the content.
 `,
 		{
-			subpathList: z
-				.array(z.string().describe("the subpath of the url"))
-				.describe("the list of subpaths to fetch"),
+			subpath: z.string().describe("The subpath of the page to return"),
+			max_length: z
+				.number()
+				.default(2000)
+				.describe("The max length of the content to return"),
+			start_index: z
+				.number()
+				.default(0)
+				.describe("The starting index of content to return"),
 		},
-		async ({ subpathList }) => {
-			const results: { subpath: string; content: unknown }[] = [];
-			for (const subpath of subpathList) {
-				const page = pages.get(subpath);
-				if (!page) {
-					logger.warn(`Page ${subpath} not found`);
-					continue;
+		async ({ subpath, start_index, max_length }) => {
+			const page = pages.get(subpath);
+
+			if (!page) {
+				logger.warn(`Page ${subpath} not found`);
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Page ${subpath} not found`,
+						},
+					],
+				};
+			}
+
+			let { content, title } = page;
+			let remainingContentLength = 0;
+
+			if (start_index > 0) {
+				content = content?.slice(start_index);
+			}
+
+			if (max_length > 0) {
+				const newContent = content?.slice(0, max_length);
+				if (newContent !== content) {
+					remainingContentLength = content.length - newContent.length;
 				}
-				results.push({ subpath, content: page.content });
+				content = newContent;
 			}
 
 			return {
 				content: [
 					{
 						type: "text",
-						text: stringify(results),
+						text: stringify({
+							subpath,
+							content,
+							title,
+							remainingContentLength,
+							startIndex: start_index,
+						}),
 					},
 				],
 			};
