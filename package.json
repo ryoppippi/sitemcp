@@ -12,7 +12,8 @@
 		"prepack": "bun run build",
 		"lint": "biome check .",
 		"format": "biome check --write .",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"prepare": "simple-git-hooks"
 	},
 	"keywords": [],
 	"author": "ryoppippi",
@@ -44,7 +45,7 @@
 		"unplugin-unused": "^0.4.4"
 	},
 	"simple-git-hooks": {
-		"pre-commit": "lint-staged"
+		"pre-commit": "bun lint-staged"
 	},
 	"lint-staged": {
 		"*": ["biome check --write --no-errors-on-unmatched "]
