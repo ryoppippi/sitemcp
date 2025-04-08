@@ -5,7 +5,7 @@ const config: ReturnType<typeof defineConfig> = defineConfig({
 	entry: "src/cli.ts",
 	fixedExtension: true,
 	publint: true,
-	dts: true,
+	dts: false,
 	clean: true,
 	bundleDts: true,
 	outputOptions: {
