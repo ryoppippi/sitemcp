@@ -11,7 +11,8 @@
 		"start": "node ./dist/cli.mjs",
 		"prepack": "bun run build",
 		"lint": "biome check .",
-		"format": "biome check --write ."
+		"format": "biome check --write .",
+		"typecheck": "tsc --noEmit"
 	},
 	"keywords": [],
 	"author": "ryoppippi",

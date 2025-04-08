@@ -7,10 +7,10 @@ import { fetchSite } from "./fetch-site.ts";
 import { logger } from "./logger.ts";
 import type { FetchSiteResult } from "./types.ts";
 import {
-	sanitizeUrl,
 	cacheDirectory,
 	ensureArray,
 	sanitizeToolName,
+	sanitizeUrl,
 } from "./utils.ts";
 
 interface StartServerOptions {

@@ -22,8 +22,10 @@ export function ensureArray<T>(input: T | T[]): T[] {
 }
 
 export function cacheDirectory(): string {
-	return process.env.XDG_CACHE_HOME
-		? path.resolve(process.env.XDG_CACHE_HOME, "sitemcp")
+	// biome-ignore lint/complexity/useLiteralKeys: <explanation>
+	return process.env["XDG_CACHE_HOME"]
+		? // biome-ignore lint/complexity/useLiteralKeys: <explanation>
+			path.resolve(process.env["XDG_CACHE_HOME"], "sitemcp")
 		: path.resolve(os.homedir(), ".cache/sitemcp");
 }
 

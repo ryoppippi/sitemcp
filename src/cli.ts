@@ -1,5 +1,5 @@
-import { version } from "../package.json";
 import cac from "cac";
+import { version } from "../package.json";
 import { startServer } from "./server.ts";
 
 const cli = cac("sitemcp");
