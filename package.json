@@ -34,12 +34,20 @@
 		"@types/turndown": "^5.0.5",
 		"bumpp": "^10.1.0",
 		"cac": "^6.7.14",
+		"lint-staged": "^15.5.0",
 		"p-queue": "^8.0.1",
 		"picocolors": "^1.1.1",
 		"publint": "^0.3.10",
+		"simple-git-hooks": "^2.12.1",
 		"tsdown": "^0.6.10",
 		"typescript": "^5.7.3",
 		"ufo": "^1.6.0",
 		"unplugin-isolated-decl": "^0.10.4"
+	},
+	"simple-git-hooks": {
+		"pre-commit": "lint-staged"
+	},
+	"lint-staged": {
+		"*": ["biome check --write --no-errors-on-unmatched "]
 	}
 }
