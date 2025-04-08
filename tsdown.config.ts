@@ -7,6 +7,7 @@ const config: ReturnType<typeof defineConfig> = defineConfig({
 	publint: true,
 	dts: false,
 	clean: true,
+	unused: { level: "error" },
 	bundleDts: true,
 	outputOptions: {
 		banner: "#!/usr/bin/env node\n",
