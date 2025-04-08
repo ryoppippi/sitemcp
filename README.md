@@ -91,3 +91,16 @@ The below example configuration for Claude Desktop
 ## License
 
 MIT.
+
+## Stats
+
+<a href="https://www.star-history.com/#ryoppippi/sitemcp&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ryoppippi/sitemcp&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ryoppippi/sitemcp&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ryoppippi/sitemcp&type=Date" />
+ </picture>
+</a>
+
+![Stats by Repobeats](https://repobeats.axiom.co/api/embed/2ad989875810c346a80fa4677ed0154ef94132c3.svg "Repobeats analytics image")
+
