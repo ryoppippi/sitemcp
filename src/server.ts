@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { stringify } from "@std/yaml";
 import { version } from "../package.json";
 import { fetchSite } from "./fetch-site.ts";
 import { logger } from "./logger.ts";
@@ -101,7 +102,7 @@ export async function startServer(
 					content: [
 						{
 							type: "text",
-							text: page.content,
+							text: stringify(page),
 						},
 					],
 				};
