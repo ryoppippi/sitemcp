@@ -21,7 +21,7 @@ interface StartServerOptions {
 	match?: string | string[];
 	contentSelector?: string;
 	limit?: number;
-	noCache?: boolean;
+	cache?: boolean;
 	silent?: boolean;
 }
 
@@ -34,7 +34,7 @@ export async function startServer(
 		match,
 		contentSelector,
 		limit,
-		noCache = false,
+		cache = false,
 	} = options;
 
 	// create server instance
@@ -52,7 +52,7 @@ export async function startServer(
 
 	let pages: FetchSiteResult | undefined = undefined;
 
-	if (!noCache) {
+	if (cache) {
 		// check if cache exists
 		if (fs.existsSync(cacheFile)) {
 			logger.info("Using cache file", cacheFile);
@@ -80,7 +80,7 @@ export async function startServer(
 		return server;
 	}
 
-	if (!noCache) {
+	if (cache) {
 		// create cache dir if not exists
 		if (!fs.existsSync(catchDir)) {
 			fs.promises.mkdir(catchDir, { recursive: true });
