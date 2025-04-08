@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { stringify } from "@std/yaml";
+import { z } from "zod";
 import { version } from "../package.json";
 import { fetchSite } from "./fetch-site.ts";
 import { logger } from "./logger.ts";
@@ -90,30 +91,68 @@ export async function startServer(
 		logger.info("Cache file written to", cacheFile);
 	}
 
-	for (const page of pages.values()) {
-		const name = sanitizeToolName(page.url);
-		const description = `get page content: ${page.title}` as const;
+	const indexServerName = `indexOf${sanitizeToolName(url)}` as const;
+	const getDocumentServerName =
+		`getDocumentOf${sanitizeToolName(url)}` as const;
 
-		logger.info(`Registering tool ${name} (${description})`);
+	/** create server for index of the site */
+	server.tool(
+		indexServerName,
+		`
+Get index of ${url}. 
+Before accessing the ${getDocumentServerName} tool, please call this tool first to get the list of pages.
+`,
+		async () => {
+			const index = Array.from(pages).map(([key, page]) => ({
+				subpath: key,
+				title: page.title,
+			}));
 
-		try {
-			server.tool(name, description, async () => {
-				return {
-					content: [
-						{
-							type: "text",
-							text: stringify(page),
-						},
-					],
-				};
-			});
-		} catch (_e) {
-			const e = _e as Error;
-			if (e.message.includes("already registered")) {
-				logger.warn(`Tool ${name} already registered, skipping`);
+			return {
+				content: [
+					{
+						type: "text",
+						text: stringify(index),
+					},
+				],
+			};
+		},
+	);
+
+	/** create server to return the selected page */
+	server.tool(
+		getDocumentServerName,
+		`
+Get page contents belonging to ${url}. 
+Before accessing this tool, please call the ${indexServerName} tool first to get the list of pages.
+This tool will return the content of the page from multiple subpaths.
+`,
+		{
+			subpathList: z
+				.array(z.string().describe("the subpath of the url"))
+				.describe("the list of subpaths to fetch"),
+		},
+		async ({ subpathList }) => {
+			const results: { subpath: string; content: unknown }[] = [];
+			for (const subpath of subpathList) {
+				const page = pages.get(subpath);
+				if (!page) {
+					logger.warn(`Page ${subpath} not found`);
+					continue;
+				}
+				results.push({ subpath, content: page.content });
 			}
-		}
-	}
+
+			return {
+				content: [
+					{
+						type: "text",
+						text: stringify(results),
+					},
+				],
+			};
+		},
+	);
 
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
