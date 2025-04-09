@@ -1,6 +1,7 @@
 import * as os from "node:os";
 import * as path from "node:path";
 import * as process from "node:process";
+import pascalCase from "just-pascal-case";
 import micromatch from "micromatch";
 import * as ufo from "ufo";
 
@@ -45,10 +46,37 @@ export function sanitizeUrl(url: string): string {
 	);
 }
 
-export function sanitizeToolName(name: string): string {
-	// Remove common URL prefixes and invalid characters
-	return `getDocumentOf-${name}`
-		.replace(/^https?:\/\//, "") // Remove http:// or https://
-		.replace(/[^a-zA-Z0-9_-]/g, "_") // Replace invalid chars with underscore
-		.substring(0, 64); // Limit to 64 characters
+/**
+ * get subdomain from url
+ * @example
+ * - https://feature-sliced.github.io/documentation/ => feature-sliced
+ */
+export function getSubdomain(url: string): string | undefined {
+	const { hostname } = new URL(url);
+	const parts = hostname.split(".");
+	if (parts.length > 2) {
+		return parts[0];
+	}
+	return undefined;
+}
+
+/**
+ * get domain without subdomain and tld
+ * @example
+ * - https://feature-sliced.github.io/documentation/ => github
+ */
+export function getDomain(url: string): string | undefined {
+	const { hostname } = new URL(url);
+	const [tld, ...parts] = hostname.split(".").reverse();
+	return parts.reverse().at(-1);
+}
+
+/**
+ * get pathname from url
+ * @example
+ * - https://feature-sliced.github.io/documentation/ => documentation
+ */
+export function getPathname(url: string): string | undefined {
+	const { pathname } = new URL(url);
+	return pathname.replaceAll("/", "-").replace(/-/g, " ").trim();
 }

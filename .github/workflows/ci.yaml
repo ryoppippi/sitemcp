@@ -15,6 +15,7 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - run: bun lint
+      - run: bun test
 
   npm-publish-dry-run-and-upload-pkg-pr-now:
     runs-on: ubuntu-latest
