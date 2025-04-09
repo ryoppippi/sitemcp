@@ -7,7 +7,7 @@ import { z } from "zod";
 import { version } from "../package.json";
 import { fetchSite } from "./fetch-site.ts";
 import { logger } from "./logger.ts";
-import type { FetchSiteResult } from "./types.ts";
+import type { FetchSiteResult, ToolNameStrategy } from "./types.ts";
 import {
 	cacheDirectory,
 	ensureArray,
@@ -23,6 +23,7 @@ interface StartServerOptions {
 	limit?: number;
 	cache?: boolean;
 	silent?: boolean;
+	toolNameStrategy?: ToolNameStrategy;
 }
 
 export async function startServer(
@@ -35,6 +36,7 @@ export async function startServer(
 		contentSelector,
 		limit,
 		cache = true,
+		toolNameStrategy = "domain",
 	} = options;
 
 	// create server instance
@@ -91,18 +93,19 @@ export async function startServer(
 		logger.info("Cache file written to", cacheFile);
 	}
 
-	const indexServerName = `indexOf${sanitizeToolName(url)}` as const;
+	const indexServerName =
+		`indexOf${sanitizeToolName(url, toolNameStrategy)}` as const;
 	const getDocumentServerName =
-		`getDocumentOf${sanitizeToolName(url)}` as const;
+		`getDocumentOf${sanitizeToolName(url, toolNameStrategy)}` as const;
 
 	/** create server for index of the site */
 	server.tool(
 		indexServerName,
 		`
-Get index of ${url}. 
-Before accessing the ${getDocumentServerName} tool, please call this tool first to get the list of pages.
-If the content is too long, you can use the \`max_length\` and \`start_index\` parameters to limit the content.
-`,
+	Get index of ${url}.
+	Before accessing the ${getDocumentServerName} tool, please call this tool first to get the list of pages.
+	If the content is too long, you can use the \`max_length\` and \`start_index\` parameters to limit the content.
+	`,
 		{
 			max_length: z
 				.number()
@@ -163,11 +166,11 @@ If the content is too long, you can use the \`max_length\` and \`start_index\` p
 	server.tool(
 		getDocumentServerName,
 		`
-Get page contents belonging to ${url}. 
-Before accessing this tool, please call the ${indexServerName} tool first to get the list of pages.
-This tool will return the content of the page from subpath.
-If the content is too long, you can use the \`max_length\` and \`start_index\` parameters to limit the content.
-`,
+	Get page contents belonging to ${url}.
+	Before accessing this tool, please call the ${indexServerName} tool first to get the list of pages.
+	This tool will return the content of the page from subpath.
+	If the content is too long, you can use the \`max_length\` and \`start_index\` parameters to limit the content.
+	`,
 		{
 			subpath: z.string().describe("The subpath of the page to return"),
 			max_length: z
