@@ -42,6 +42,17 @@ sitemcp https://daisyui.com
 sitemcp https://daisyui.com --concurrency 10
 ```
 
+### Tool Name Strategy
+
+Use `-t, --tool-name-strategy` to specify the tool name strategy, it will be used as the MCP server name (default: `domain`):
+This will be used as the MCP server name.
+
+```bash
+sitemcp https://vite.dev -t domain # indexOfVite / getDocumentOfVite
+sitemcp https://react-tweet.vercel.app/ -t subdomain # indexOfReactTweet / getDocumentOfReactTweet
+sitemcp https://ryoppippi.github.io/vite-plugin-favicons/ -t pathname # indexOfVitePluginFavicons / getDocumentOfVitePluginFavicons
+```
+
 ### Match specific pages
 
 Use the `-m, --match` flag to specify the pages you want to fetch:

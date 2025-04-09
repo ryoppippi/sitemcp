@@ -1,8 +1,10 @@
 import * as os from "node:os";
 import * as path from "node:path";
 import * as process from "node:process";
+import pascalCase from "just-pascal-case";
 import micromatch from "micromatch";
 import * as ufo from "ufo";
+import type { ToolNameStrategy } from "./types";
 
 // xK or xM
 export function formatNumber(num: number): string {
@@ -45,10 +47,75 @@ export function sanitizeUrl(url: string): string {
 	);
 }
 
-export function sanitizeToolName(name: string): string {
-	// Remove common URL prefixes and invalid characters
-	return `getDocumentOf-${name}`
-		.replace(/^https?:\/\//, "") // Remove http:// or https://
-		.replace(/[^a-zA-Z0-9_-]/g, "_") // Replace invalid chars with underscore
-		.substring(0, 64); // Limit to 64 characters
+/**
+ * get subdomain from url
+ * @example
+ * - https://feature-sliced.github.io/documentation/ => feature-sliced
+ */
+export function getSubdomain(url: string): string | undefined {
+	const { hostname } = new URL(url);
+	const parts = hostname.split(".");
+	if (parts.length > 2) {
+		return parts[0];
+	}
+	return undefined;
+}
+
+/**
+ * get domain without subdomain and tld
+ * @example
+ * - https://feature-sliced.github.io/documentation/ => github
+ */
+export function getDomain(url: string): string {
+	const { hostname } = new URL(url);
+	const [tld, ...parts] = hostname.split(".").reverse();
+	if (tld == null) {
+		throw new Error(`Invalid URL: ${url}`);
+	}
+
+	const domain = parts.reverse().at(-1);
+	if (!domain) {
+		throw new Error(`Invalid URL: ${url}`);
+	}
+	return domain;
+}
+
+/**
+ * get pathname from url
+ * @example
+ * - https://feature-sliced.github.io/documentation/ => documentation
+ */
+export function getPathname(url: string): string | undefined {
+	const { pathname } = new URL(url);
+	if (pathname === "/") {
+		return undefined;
+	}
+	return pathname.replaceAll("/", "-").replace(/-/g, " ").trim();
+}
+
+export function sanitizeToolName(
+	url: string,
+	strategy: ToolNameStrategy,
+): string {
+	let name: string | undefined;
+	switch (strategy) {
+		case "subdomain":
+			name = getSubdomain(url);
+			break;
+		case "domain":
+			name = getDomain(url);
+			break;
+		case "pathname":
+			name = getPathname(url);
+			break;
+		default:
+			throw new Error(`Unknown strategy: ${strategy}`);
+	}
+
+	if (!name) {
+		throw new Error(`Invalid URL: ${url}`);
+	}
+
+	const pascalizedName = pascalCase(name);
+	return pascalizedName;
 }

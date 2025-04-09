@@ -12,6 +12,7 @@
 		"prepack": "bun run build",
 		"lint": "biome check .",
 		"format": "biome check --write .",
+		"test": "bun test",
 		"typecheck": "tsc --noEmit",
 		"prepare": "simple-git-hooks"
 	},
@@ -36,6 +37,7 @@
 		"@types/turndown": "^5.0.5",
 		"bumpp": "^10.1.0",
 		"cac": "^6.7.14",
+		"just-pascal-case": "^3.2.0",
 		"lint-staged": "^15.5.0",
 		"p-queue": "^8.0.1",
 		"picocolors": "^1.1.1",
