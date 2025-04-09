@@ -1,6 +1,11 @@
 import { expect, test } from "bun:test";
 
-import { getDomain, getPathname, getSubdomain } from "./utils";
+import {
+	getDomain,
+	getPathname,
+	getSubdomain,
+	sanitizeToolName,
+} from "./utils";
 
 test("getSubdomain", () => {
 	expect(getSubdomain("https://feature-sliced.github.io/documentation/")).toBe(
@@ -21,4 +26,25 @@ test("getPathname", () => {
 		"documentation",
 	);
 	expect(getPathname("https://github.io/documentation/")).toBe("documentation");
+});
+
+test("sanitizeToolName", () => {
+	expect(
+		sanitizeToolName(
+			"https://feature-sliced.github.io/documentation/",
+			"subdomain",
+		),
+	).toBe("FeatureSliced");
+	expect(
+		sanitizeToolName(
+			"https://feature-sliced.github.io/documentation/",
+			"domain",
+		),
+	).toBe("Github");
+	expect(
+		sanitizeToolName(
+			"https://feature-sliced.github.io/documentation/",
+			"pathname",
+		),
+	).toBe("Documentation");
 });

@@ -4,6 +4,7 @@ import * as process from "node:process";
 import pascalCase from "just-pascal-case";
 import micromatch from "micromatch";
 import * as ufo from "ufo";
+import type { ToolNameStrategy } from "./types";
 
 // xK or xM
 export function formatNumber(num: number): string {
@@ -65,10 +66,18 @@ export function getSubdomain(url: string): string | undefined {
  * @example
  * - https://feature-sliced.github.io/documentation/ => github
  */
-export function getDomain(url: string): string | undefined {
+export function getDomain(url: string): string {
 	const { hostname } = new URL(url);
 	const [tld, ...parts] = hostname.split(".").reverse();
-	return parts.reverse().at(-1);
+	if (tld == null) {
+		throw new Error(`Invalid URL: ${url}`);
+	}
+
+	const domain = parts.reverse().at(-1);
+	if (!domain) {
+		throw new Error(`Invalid URL: ${url}`);
+	}
+	return domain;
 }
 
 /**
@@ -78,5 +87,35 @@ export function getDomain(url: string): string | undefined {
  */
 export function getPathname(url: string): string | undefined {
 	const { pathname } = new URL(url);
+	if (pathname === "/") {
+		return undefined;
+	}
 	return pathname.replaceAll("/", "-").replace(/-/g, " ").trim();
+}
+
+export function sanitizeToolName(
+	url: string,
+	strategy: ToolNameStrategy,
+): string {
+	let name: string | undefined;
+	switch (strategy) {
+		case "subdomain":
+			name = getSubdomain(url);
+			break;
+		case "domain":
+			name = getDomain(url);
+			break;
+		case "pathname":
+			name = getPathname(url);
+			break;
+		default:
+			throw new Error(`Unknown strategy: ${strategy}`);
+	}
+
+	if (!name) {
+		throw new Error(`Invalid URL: ${url}`);
+	}
+
+	const pascalizedName = pascalCase(name);
+	return pascalizedName;
 }

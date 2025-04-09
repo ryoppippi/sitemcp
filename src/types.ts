@@ -33,3 +33,5 @@ export type Page = {
 };
 
 export type FetchSiteResult = Map<string, Page>;
+
+export type ToolNameStrategy = "subdomain" | "domain" | "pathname";
