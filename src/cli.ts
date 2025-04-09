@@ -14,6 +14,10 @@ cli
 	.option("--limit <limit>", "Limit the result to this amount of pages")
 	.option("--silent", "Do not print any logs")
 	.option("--no-cache", "Do not use cache")
+	.option(
+		"-t, --tool-name-strategy <strategy>",
+		"Tool name strategy ('subdomain' | 'domain' | 'pathname') default: 'domain'",
+	)
 	.action(async (url, flags) => {
 		if (!url) {
 			cli.outputHelp();
