@@ -34,7 +34,7 @@ export async function startServer(
 		match,
 		contentSelector,
 		limit,
-		cache = false,
+		cache = true,
 	} = options;
 
 	// create server instance
