@@ -18,6 +18,7 @@ cli
 		"-t, --tool-name-strategy <strategy>",
 		"Tool name strategy ('subdomain' | 'domain' | 'pathname') default: 'domain'",
 	)
+	.option("--max-length <number>", "Maximum length of the content to return (default: 2000)") // Pff2f
 	.action(async (url, flags) => {
 		if (!url) {
 			cli.outputHelp();

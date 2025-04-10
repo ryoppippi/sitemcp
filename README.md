@@ -40,6 +40,9 @@ sitemcp https://daisyui.com
 
 # or better concurrency
 sitemcp https://daisyui.com --concurrency 10
+
+# or with max length
+sitemcp https://daisyui.com --max-length 3000
 ```
 
 ### Tool Name Strategy

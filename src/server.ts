@@ -24,6 +24,7 @@ interface StartServerOptions {
 	cache?: boolean;
 	silent?: boolean;
 	toolNameStrategy?: ToolNameStrategy;
+	maxLength?: number;
 }
 
 export async function startServer(
@@ -37,6 +38,7 @@ export async function startServer(
 		limit,
 		cache = true,
 		toolNameStrategy = "domain",
+		maxLength = 2000,
 	} = options;
 
 	// create server instance
@@ -109,7 +111,7 @@ export async function startServer(
 		{
 			max_length: z
 				.number()
-				.default(100)
+				.default(maxLength)
 				.describe("The max length of the index to return"),
 			start_index: z
 				.number()
@@ -175,7 +177,7 @@ export async function startServer(
 			subpath: z.string().describe("The subpath of the page to return"),
 			max_length: z
 				.number()
-				.default(2000)
+				.default(maxLength)
 				.describe("The max length of the content to return"),
 			start_index: z
 				.number()
