@@ -44,13 +44,22 @@ sitemcp https://daisyui.com --concurrency 10
 
 ### Tool Name Strategy
 
-Use `-t, --tool-name-strategy` to specify the tool name strategy, it will be used as the MCP server name (default: `domain`):
+Use `-t, --tool-name-strategy` to specify the tool name strategy, it will be used as the MCP server name (default: `domain`).
 This will be used as the MCP server name.
 
 ```bash
 sitemcp https://vite.dev -t domain # indexOfVite / getDocumentOfVite
 sitemcp https://react-tweet.vercel.app/ -t subdomain # indexOfReactTweet / getDocumentOfReactTweet
 sitemcp https://ryoppippi.github.io/vite-plugin-favicons/ -t pathname # indexOfVitePluginFavicons / getDocumentOfVitePluginFavicons
+```
+
+### Max Length of Tool Name
+
+Use `-l, --max-length` to specify the max length of the tool name (default: 2000).
+Some MCP clients have a limit on the length of the tool name, so you can use this option to set a max length.
+
+```bash
+sitemcp https://vite.dev -l 10000
 ```
 
 ### Match specific pages
