@@ -15,6 +15,7 @@
 	"stabilityDays": 2,
 	"timezone": "Europe/London",
 	"schedule": "before 2pm on Monday",
+	"forkProcessing": "enabled",
 	"packageRules": [
 		{
 			"matchPackageNames": ["typia", "ts-patch"],
