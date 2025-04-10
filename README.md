@@ -87,7 +87,7 @@ The below example configuration for Claude Desktop
         "sitemcp",
         "https://daisyui.com",
         "-m",
-        "/components/**",
+        "/components/**"
       ]
     }
   }
