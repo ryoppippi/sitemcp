@@ -183,7 +183,7 @@ class Fetcher {
 	}
 }
 
-export function serializePages(
+export function serialisePages(
 	pages: FetchSiteResult,
 	format: "json" | "text",
 ): string {

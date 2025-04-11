@@ -31,7 +31,7 @@ export function cacheDirectory(): string {
 		: path.resolve(os.homedir(), ".cache/sitemcp");
 }
 
-export function sanitizeUrl(url: string): string {
+export function sanitiseUrl(url: string): string {
 	const withoutProtocol = ufo.withoutProtocol(url);
 
 	return (
@@ -93,7 +93,7 @@ export function getPathname(url: string): string | undefined {
 	return pathname.replaceAll("/", "-").replace(/-/g, " ").trim();
 }
 
-export function sanitizeToolName(
+export function sanitiseToolName(
 	url: string,
 	strategy: ToolNameStrategy,
 ): string {

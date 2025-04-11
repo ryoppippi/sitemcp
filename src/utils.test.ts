@@ -4,7 +4,7 @@ import {
 	getDomain,
 	getPathname,
 	getSubdomain,
-	sanitizeToolName,
+	sanitiseToolName,
 } from "./utils";
 
 test("getSubdomain", () => {
@@ -28,21 +28,21 @@ test("getPathname", () => {
 	expect(getPathname("https://github.io/documentation/")).toBe("documentation");
 });
 
-test("sanitizeToolName", () => {
+test("sanitiseToolName", () => {
 	expect(
-		sanitizeToolName(
+		sanitiseToolName(
 			"https://feature-sliced.github.io/documentation/",
 			"subdomain",
 		),
 	).toBe("FeatureSliced");
 	expect(
-		sanitizeToolName(
+		sanitiseToolName(
 			"https://feature-sliced.github.io/documentation/",
 			"domain",
 		),
 	).toBe("Github");
 	expect(
-		sanitizeToolName(
+		sanitiseToolName(
 			"https://feature-sliced.github.io/documentation/",
 			"pathname",
 		),

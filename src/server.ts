@@ -11,8 +11,8 @@ import type { FetchSiteResult, ToolNameStrategy } from "./types.ts";
 import {
 	cacheDirectory,
 	ensureArray,
-	sanitizeToolName,
-	sanitizeUrl,
+	sanitiseToolName,
+	sanitiseUrl,
 } from "./utils.ts";
 
 interface StartServerOptions {
@@ -50,9 +50,9 @@ export async function startServer(
 	// use console.error because stdout cannot be used in MCP server
 	logger.setLevel("warn");
 
-	const sanitizedUrl = sanitizeUrl(url);
+	const sanitisedUrl = sanitiseUrl(url);
 	const catchDir = cacheDirectory();
-	const cacheFile = path.join(catchDir, `${sanitizedUrl}.json`);
+	const cacheFile = path.join(catchDir, `${sanitisedUrl}.json`);
 
 	let pages: FetchSiteResult | undefined = undefined;
 
@@ -96,9 +96,9 @@ export async function startServer(
 	}
 
 	const indexServerName =
-		`indexOf${sanitizeToolName(url, toolNameStrategy)}` as const;
+		`indexOf${sanitiseToolName(url, toolNameStrategy)}` as const;
 	const getDocumentServerName =
-		`getDocumentOf${sanitizeToolName(url, toolNameStrategy)}` as const;
+		`getDocumentOf${sanitiseToolName(url, toolNameStrategy)}` as const;
 
 	/** create server for index of the site */
 	server.tool(

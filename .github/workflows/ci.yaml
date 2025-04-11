@@ -28,3 +28,13 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - run: bunx pkg-pr-new publish
+
+  spell-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: crate-ci/typos@master
+        with:
+          config: ./typos.toml
