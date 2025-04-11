@@ -53,10 +53,12 @@ sitemcp https://react-tweet.vercel.app/ -t subdomain # indexOfReactTweet / getDo
 sitemcp https://ryoppippi.github.io/vite-plugin-favicons/ -t pathname # indexOfVitePluginFavicons / getDocumentOfVitePluginFavicons
 ```
 
-### Max Length of Tool Name
+### Max Length of Content
 
-Use `-l, --max-length` to specify the max length of the tool name (default: 2000).
-Some MCP clients have a limit on the length of the tool name, so you can use this option to set a max length.
+Use `-l, --max-length` to specify the max length of content, default is `2000` characters.
+This is useful for sites with long content, such as blogs or documentation.
+The acceptable content length depends on the MCP client you are using, so please check the documentation of your MCP client for more details.
+Also welcome to open an issue if you have any questions.
 
 ```bash
 sitemcp https://vite.dev -l 10000
