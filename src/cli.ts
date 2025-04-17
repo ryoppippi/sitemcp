@@ -17,7 +17,10 @@ cli
 	.option(
 		"-t, --tool-name-strategy <strategy>",
 		`Tool name strategy (${TOOL_NAME_STRATEGIES.join(", ")})`,
-		{ default: "domain" },
+		{
+			default: "domain",
+			type: [String],
+		},
 	)
 	.option(
 		"-l, --max-length <number>",
@@ -25,7 +28,6 @@ cli
 		{ default: 2000 },
 	)
 	.action(async (url, flags) => {
-		console.log({ flags });
 		if (!url) {
 			cli.outputHelp();
 			return;
