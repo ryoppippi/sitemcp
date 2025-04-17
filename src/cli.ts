@@ -15,13 +15,16 @@ cli
 	.option("--no-cache", "Do not use cache")
 	.option(
 		"-t, --tool-name-strategy <strategy>",
-		"Tool name strategy ('subdomain' | 'domain' | 'pathname') default: 'domain'",
+		"Tool name strategy ('subdomain' | 'domain' | 'pathname')",
+		{ default: "domain" },
 	)
 	.option(
 		"-l, --max-length <number>",
-		"Maximum length of the content to return (default: 2000)",
+		"Maximum length of the content to return",
+		{ default: 2000 },
 	)
 	.action(async (url, flags) => {
+		console.log({ flags });
 		if (!url) {
 			cli.outputHelp();
 			return;
@@ -29,6 +32,7 @@ cli
 
 		await startServer({
 			url,
+			cache: flags.cache ?? true, // we can use default option of cac, but science we use `--no` prefix, we don't want to show the user that the default is true. It is misleading.
 			...flags,
 		});
 	});

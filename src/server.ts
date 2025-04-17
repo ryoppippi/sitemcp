@@ -17,13 +17,14 @@ import {
 
 interface StartServerOptions {
 	url: string;
-	concurrency?: number;
-	match?: string | string[];
+	concurrency: number;
 	contentSelector?: string;
+	cache: boolean;
+	silent: boolean;
+	toolNameStrategy: ToolNameStrategy;
+	maxLength: number;
+	match?: string | string[];
 	limit?: number;
-	cache?: boolean;
-	toolNameStrategy?: ToolNameStrategy;
-	maxLength?: number;
 }
 
 export async function startServer(
@@ -31,13 +32,13 @@ export async function startServer(
 ): Promise<McpServer> {
 	const {
 		url,
-		concurrency = 3,
-		match,
+		concurrency,
 		contentSelector,
+		cache,
+		toolNameStrategy,
+		maxLength,
+		match,
 		limit,
-		cache = true,
-		toolNameStrategy = "domain",
-		maxLength = 2000,
 	} = options;
 
 	// create server instance
