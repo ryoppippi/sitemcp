@@ -22,7 +22,6 @@ interface StartServerOptions {
 	contentSelector?: string;
 	limit?: number;
 	cache?: boolean;
-	silent?: boolean;
 	toolNameStrategy?: ToolNameStrategy;
 	maxLength?: number;
 }

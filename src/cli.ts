@@ -12,7 +12,6 @@ cli
 	.option("-m, --match <pattern>", "Only fetch matched pages")
 	.option("--content-selector <selector>", "The CSS selector to find content")
 	.option("--limit <limit>", "Limit the result to this amount of pages")
-	.option("--silent", "Do not print any logs")
 	.option("--no-cache", "Do not use cache")
 	.option(
 		"-t, --tool-name-strategy <strategy>",
