@@ -1,6 +1,7 @@
 import cac from "cac";
 import { version } from "../package.json";
 import { startServer } from "./server.ts";
+import { TOOL_NAME_STRATEGIES } from "./types.ts";
 
 const cli = cac("sitemcp");
 
@@ -15,7 +16,7 @@ cli
 	.option("--no-cache", "Do not use cache")
 	.option(
 		"-t, --tool-name-strategy <strategy>",
-		"Tool name strategy ('subdomain' | 'domain' | 'pathname')",
+		`Tool name strategy (${TOOL_NAME_STRATEGIES.join(", ")})`,
 		{ default: "domain" },
 	)
 	.option(

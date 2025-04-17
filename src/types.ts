@@ -34,4 +34,9 @@ export type Page = {
 
 export type FetchSiteResult = Map<string, Page>;
 
-export type ToolNameStrategy = "subdomain" | "domain" | "pathname";
+export const TOOL_NAME_STRATEGIES = [
+	"subdomain",
+	"domain",
+	"pathname",
+] as const;
+export type ToolNameStrategy = (typeof TOOL_NAME_STRATEGIES)[number];
