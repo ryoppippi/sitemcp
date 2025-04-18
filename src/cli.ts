@@ -1,7 +1,7 @@
 import cac from "cac";
 import { version } from "../package.json";
 import { startServer } from "./server.ts";
-import { TOOL_NAME_STRATEGIES } from "./types.ts";
+import { type StartServerOptions, TOOL_NAME_STRATEGIES } from "./types.ts";
 
 const cli = cac("sitemcp");
 
@@ -27,16 +27,16 @@ cli
 		"Maximum length of the content to return",
 		{ default: 2000 },
 	)
-	.action(async (url, flags) => {
+	.action(async (url: string, flags: StartServerOptions) => {
 		if (!url) {
 			cli.outputHelp();
 			return;
 		}
 
 		await startServer({
+			...flags,
 			url,
 			cache: flags.cache ?? true, // we can use default option of cac, but science we use `--no` prefix, we don't want to show the user that the default is true. It is misleading.
-			...flags,
 		});
 	});
 

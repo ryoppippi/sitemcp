@@ -7,25 +7,13 @@ import { z } from "zod";
 import { version } from "../package.json";
 import { fetchSite } from "./fetch-site.ts";
 import { logger } from "./logger.ts";
-import type { FetchSiteResult, ToolNameStrategy } from "./types.ts";
+import type { FetchSiteResult, StartServerOptions } from "./types.ts";
 import {
 	cacheDirectory,
 	ensureArray,
 	sanitiseToolName,
 	sanitiseUrl,
 } from "./utils.ts";
-
-interface StartServerOptions {
-	url: string;
-	concurrency: number;
-	contentSelector?: string;
-	cache: boolean;
-	silent: boolean;
-	toolNameStrategy: ToolNameStrategy;
-	maxLength: number;
-	match?: string | string[];
-	limit?: number;
-}
 
 export async function startServer(
 	options: StartServerOptions,

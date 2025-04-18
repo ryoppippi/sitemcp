@@ -40,3 +40,15 @@ export const TOOL_NAME_STRATEGIES = [
 	"pathname",
 ] as const;
 export type ToolNameStrategy = (typeof TOOL_NAME_STRATEGIES)[number];
+
+export interface StartServerOptions {
+	url: string;
+	concurrency: number;
+	contentSelector?: string;
+	cache: boolean;
+	silent: boolean;
+	toolNameStrategy: ToolNameStrategy;
+	maxLength: number;
+	match?: string | string[];
+	limit?: number;
+}
