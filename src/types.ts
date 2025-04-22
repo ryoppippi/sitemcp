@@ -46,7 +46,6 @@ export interface StartServerOptions {
 	concurrency: number;
 	contentSelector?: string;
 	cache: boolean;
-	silent: boolean;
 	toolNameStrategy: ToolNameStrategy;
 	maxLength: number;
 	match?: string | string[];
