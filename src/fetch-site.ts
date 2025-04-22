@@ -182,22 +182,3 @@ class Fetcher {
 		});
 	}
 }
-
-export function serialisePages(
-	pages: FetchSiteResult,
-	format: "json" | "text",
-): string {
-	if (format === "json") {
-		return JSON.stringify([...pages.values()]);
-	}
-
-	return [...pages.values()]
-		.map((page) =>
-			`<page>
-  <title>${page.title}</title>
-  <url>${page.url}</url>
-  <content>${page.content}</content>
-</page>`.trim(),
-		)
-		.join("\n\n");
-}
