@@ -1,4 +1,3 @@
-import process from "node:process";
 import { cli } from "cleye";
 import { version } from "../package.json";
 import { startServer } from "./server.ts";
@@ -19,11 +18,13 @@ const argv = cli({
 		},
 		match: {
 			type: [String],
+			placeholder: "<pattern>",
 			alias: "m",
 			description: "Only fetch matched pages",
 		},
 		contentSelector: {
 			type: String,
+			placeholder: "<selector>",
 			description: "The CSS selector to find content",
 		},
 		limit: {
@@ -42,6 +43,7 @@ const argv = cli({
 				}
 				return type;
 			},
+			placeholder: "<strategy>",
 			default: "domain" as const,
 			alias: "t",
 			description: `Tool name strategy (${TOOL_NAME_STRATEGIES.join(", ")})`,
