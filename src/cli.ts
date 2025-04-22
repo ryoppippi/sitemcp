@@ -19,7 +19,6 @@ cli
 		`Tool name strategy (${TOOL_NAME_STRATEGIES.join(", ")})`,
 		{
 			default: "domain",
-			type: [String],
 		},
 	)
 	.option(
