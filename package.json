@@ -54,5 +54,5 @@
 	"lint-staged": {
 		"*": ["biome check --write --no-errors-on-unmatched "]
 	},
-	"trustedDependencies": ["@biomejs/biome"]
+	"trustedDependencies": ["@biomejs/biome", "simple-git-hooks"]
 }
