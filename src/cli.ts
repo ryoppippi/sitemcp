@@ -53,6 +53,30 @@ const argv = cli({
 			description: "Maximum length of the content to return",
 		},
 	},
+	help: {
+		examples: [
+			"# Basic usage",
+			"$ sitemcp https://example.com",
+			"",
+			"# With better concurrency",
+			"$ sitemcp https://daisyui.com --concurrency 10",
+			"",
+			"# With a custom tool name strategy",
+			"$ sitemcp https://react-tweet.vercel.app/ -t subdomain # tool names would be indexOfReactTweet / getDocumentOfReactTweet",
+			"",
+			"# With matching specific pages",
+			'$ sitemcp https://vite.dev -m "/blog/**" -m "/guide/**"',
+			"",
+			"# With a custom content selector",
+			'$ sitemcp https://vite.dev --content-selector ".content"',
+			"",
+			"# With a custom content length",
+			"$ sitemcp https://vite.dev -l 10000",
+			"",
+			"# Without cache",
+			"$ sitemcp https://ryoppippi.com --no-cache",
+		],
+	},
 });
 
 await startServer({
