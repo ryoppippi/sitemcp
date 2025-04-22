@@ -34,7 +34,7 @@ const argv = cli({
 		noCache: {
 			type: Boolean,
 			default: false,
-			description: "Use cache",
+			description: "Disable cache",
 		},
 		toolNameStrategy: {
 			type: (type: ToolNameStrategy): ToolNameStrategy => {
