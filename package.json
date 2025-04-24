@@ -2,6 +2,7 @@
 	"version": "0.4.1",
 	"name": "sitemcp",
 	"description": "Fetch an entire site and use it as a MCP Server",
+	"repository": "https://github.com/ryoppippi/sitemcp",
 	"bin": "./dist/cli.mjs",
 	"files": ["dist"],
 	"type": "module",
@@ -15,7 +16,7 @@
 		"typecheck": "tsc --noEmit",
 		"prepare": "simple-git-hooks"
 	},
-	"keywords": [],
+	"keywords": ["cli", "MCP"],
 	"author": "ryoppippi",
 	"license": "MIT",
 	"dependencies": {
