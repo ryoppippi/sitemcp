@@ -6,10 +6,9 @@
 	"files": ["dist"],
 	"type": "module",
 	"scripts": {
-		"release": "bun run build && bun lint && bun typecheck && bun test && bumpp && npm publish --access public",
+		"release": "bun lint && bun typecheck && bun test && bun run build && bumpp && npm publish --access public",
 		"build": "tsdown",
 		"start": "node ./dist/cli.mjs",
-		"prepack": "bun run build",
 		"lint": "biome check .",
 		"format": "biome check --write .",
 		"test": "bun test",
