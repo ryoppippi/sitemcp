@@ -52,7 +52,7 @@
 		"pre-commit": "bun lint-staged"
 	},
 	"lint-staged": {
-		"*": ["bun format"]
+		"*": ["bun format --no-errors-on-unmatched"]
 	},
 	"trustedDependencies": ["@biomejs/biome", "simple-git-hooks"]
 }
