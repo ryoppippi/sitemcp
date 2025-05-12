@@ -1,5 +1,5 @@
 {
-	"version": "0.4.3",
+	"version": "0.4.4",
 	"name": "sitemcp",
 	"description": "Fetch an entire site and use it as a MCP Server",
 	"repository": "ryoppippi/sitemcp",
