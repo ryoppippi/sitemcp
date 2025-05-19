@@ -29,6 +29,8 @@ jobs:
         working-directory: ${{env.PACKAGE_DIR}}
 
   release:
+    needs:
+      - npm
     runs-on: ubuntu-latest
     permissions:
       contents: write
