@@ -8,7 +8,7 @@
 	"files": ["dist"],
 	"type": "module",
 	"scripts": {
-		"release": "bun lint && bun typecheck && bun test && bun run build && bumpp && npm publish --access public",
+		"release": "bun lint && bun typecheck && bun test && bun run build && bump",
 		"build": "tsdown",
 		"start": "node ./dist/cli.mjs",
 		"lint": "biome check .",
