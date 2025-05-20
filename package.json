@@ -15,7 +15,7 @@
 		"format": "biome check --write .",
 		"test": "bun test",
 		"typecheck": "tsc --noEmit",
-		"prepack": "clean-pkg-json",
+		"prepack": "bun run build && clean-pkg-json",
 		"prepare": "simple-git-hooks"
 	},
 	"keywords": ["cli", "MCP"],
