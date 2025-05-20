@@ -21,10 +21,12 @@ class Fetcher {
 	#pages: FetchSiteResult = new Map();
 	#fetched: Set<string> = new Set();
 	#queue: Queue;
+	options: Options;
 
-	constructor(public options: Options) {
+	constructor(options: Options) {
 		const concurrency = options.concurrency || 3;
 		this.#queue = new Queue({ concurrency });
+		this.options = options;
 	}
 
 	#limitReached() {
