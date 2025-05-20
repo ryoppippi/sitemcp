@@ -8,18 +8,16 @@
 		"jsx": "react-jsx",
 		"isolatedDeclarations": true,
 		"declaration": true,
-
 		// Bundler mode
 		"moduleResolution": "bundler",
 		"allowImportingTsExtensions": true,
 		"verbatimModuleSyntax": true,
 		"noEmit": true,
-
+		"erasableSyntaxOnly": true,
 		// Best practices
 		"strict": true,
 		"skipLibCheck": true,
 		"noFallthroughCasesInSwitch": true,
-
 		// Some stricter flags
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
