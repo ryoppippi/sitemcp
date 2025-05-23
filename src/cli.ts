@@ -4,9 +4,6 @@ import { startServer } from "./server.ts";
 import { TOOL_NAME_STRATEGIES, type ToolNameStrategy } from "./types.ts";
 
 const command = define({
-	name: "sitemcp",
-	description: "Site MCP - Convert websites to MCP tools",
-
 	args: {
 		url: {
 			type: "positional",
@@ -112,4 +109,8 @@ $ sitemcp https://ryoppippi.com --no-cache`,
 	},
 });
 
-await cli(process.argv.slice(2), command);
+await cli(process.argv.slice(2), command, {
+	name: "sitemcp",
+	version,
+	description: "Site MCP - Convert websites to MCP tools",
+});
