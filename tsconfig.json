@@ -10,10 +10,10 @@
 		"declaration": true,
 		// Bundler mode
 		"moduleResolution": "bundler",
+		"resolveJsonModule": true,
 		"allowImportingTsExtensions": true,
 		"verbatimModuleSyntax": true,
 		"noEmit": true,
-		"erasableSyntaxOnly": true,
 		// Best practices
 		"strict": true,
 		"skipLibCheck": true,
