@@ -1,88 +1,116 @@
-import { cli } from "cleye";
-import { version } from "../package.json";
+import { cli, define } from "gunshi";
+import { description, name, version } from "../package.json";
 import { startServer } from "./server.ts";
 import { TOOL_NAME_STRATEGIES, type ToolNameStrategy } from "./types.ts";
 
-const argv = cli({
-	name: "sitemcp",
-	version,
-	parameters: [
-		"<url>", // The URL to fetch
-	],
-	flags: {
+const command = define({
+	args: {
+		url: {
+			type: "positional",
+			description: "The URL to fetch",
+		},
 		concurrency: {
-			type: Number,
+			type: "number",
+			short: "c",
 			default: 3,
-			alias: "c",
 			description: "Number of concurrent requests",
 		},
 		match: {
-			type: [String],
-			placeholder: "<pattern>",
-			alias: "m",
+			type: "string",
+			multiple: true,
+			short: "m",
 			description: "Only fetch matched pages",
 		},
 		contentSelector: {
-			type: String,
-			placeholder: "<selector>",
+			type: "string",
 			description: "The CSS selector to find content",
 		},
 		limit: {
-			type: Number,
+			type: "number",
 			description: "Limit the result to this amount of pages",
 		},
-		noCache: {
-			type: Boolean,
-			default: false,
+		cache: {
+			type: "boolean",
+			negatable: true,
 			description: "Disable cache",
+			default: true,
 		},
 		toolNameStrategy: {
-			type: (type: ToolNameStrategy): ToolNameStrategy => {
-				if (!TOOL_NAME_STRATEGIES.includes(type)) {
-					throw new Error(`Invalid tool name strategy: ${type}`);
-				}
-				return type;
-			},
-			placeholder: "<strategy>",
-			default: "domain" as const,
-			alias: "t",
-			description: `Tool name strategy (${TOOL_NAME_STRATEGIES.join(", ")})`,
+			type: "enum",
+			short: "t",
+			default: "domain",
+			choices: TOOL_NAME_STRATEGIES,
+			description: "Tool name strategy",
 		},
 		maxLength: {
-			type: Number,
+			type: "number",
+			short: "l",
 			default: 2000,
-			alias: "l",
 			description: "Maximum length of the content to return",
 		},
 	},
-	help: {
-		examples: [
-			"# Basic usage",
-			"$ sitemcp https://example.com",
-			"",
-			"# With better concurrency",
-			"$ sitemcp https://daisyui.com --concurrency 10",
-			"",
-			"# With a custom tool name strategy",
-			"$ sitemcp https://react-tweet.vercel.app/ -t subdomain # tool names would be indexOfReactTweet / getDocumentOfReactTweet",
-			"",
-			"# With matching specific pages",
-			'$ sitemcp https://vite.dev -m "/blog/**" -m "/guide/**"',
-			"",
-			"# With a custom content selector",
-			'$ sitemcp https://vite.dev --content-selector ".content"',
-			"",
-			"# With a custom content length",
-			"$ sitemcp https://vite.dev -l 10000",
-			"",
-			"# Without cache",
-			"$ sitemcp https://ryoppippi.com --no-cache",
-		],
+
+	examples: `# Basic usage
+$ sitemcp https://example.com
+
+# With better concurrency
+$ sitemcp https://daisyui.com --concurrency 10
+
+# With a custom tool name strategy
+$ sitemcp https://react-tweet.vercel.app/ -t subdomain # tool names would be indexOfReactTweet / getDocumentOfReactTweet
+
+# With matching specific pages
+$ sitemcp https://vite.dev -m "/blog/**" -m "/guide/**"
+
+# With a custom content selector
+$ sitemcp https://vite.dev --content-selector ".content"
+
+# With a custom content length
+$ sitemcp https://vite.dev -l 10000
+
+# Without cache
+$ sitemcp https://ryoppippi.com --no-cache`,
+
+	run: async (ctx) => {
+		const {
+			url,
+			concurrency,
+			match,
+			contentSelector,
+			limit,
+			cache,
+			toolNameStrategy,
+			maxLength,
+		} = ctx.values;
+
+		// Validate toolNameStrategy
+		if (
+			toolNameStrategy &&
+			!TOOL_NAME_STRATEGIES.includes(toolNameStrategy as ToolNameStrategy)
+		) {
+			throw new Error(`Invalid tool name strategy: ${toolNameStrategy}`);
+		}
+
+		// Validate required positional argument
+		if (!url) {
+			throw new Error("URL is required");
+		}
+
+		await startServer({
+			concurrency: concurrency ?? 3,
+			match: match ?? [],
+			contentSelector,
+			limit,
+			cache,
+			toolNameStrategy: (toolNameStrategy as ToolNameStrategy) ?? "domain",
+			maxLength: maxLength ?? 2000,
+			url,
+		});
 	},
 });
 
-await startServer({
-	...argv.flags,
-	cache: !argv.flags.noCache,
-	url: argv._.url,
+await cli(process.argv.slice(2), command, {
+	name,
+	version,
+	description,
 });
