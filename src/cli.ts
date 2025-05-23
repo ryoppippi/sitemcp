@@ -1,5 +1,5 @@
 import { cli, define } from "gunshi";
-import { version } from "../package.json";
+import { description, name, version } from "../package.json";
 import { startServer } from "./server.ts";
 import { TOOL_NAME_STRATEGIES, type ToolNameStrategy } from "./types.ts";
 
@@ -110,7 +110,7 @@ $ sitemcp https://ryoppippi.com --no-cache`,
 });
 
 await cli(process.argv.slice(2), command, {
-	name: "sitemcp",
+	name,
 	version,
-	description: "Site MCP - Convert websites to MCP tools",
+	description,
 });
