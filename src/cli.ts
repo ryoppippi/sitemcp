@@ -21,8 +21,9 @@ const command = define({
 			short: "m",
 			description: "Only fetch matched pages",
 		},
-		"content-selector": {
+		contentSelector: {
 			type: "string",
+			toKebab: true,
 			description: "The CSS selector to find content",
 		},
 		limit: {
@@ -35,18 +36,20 @@ const command = define({
 			description: "Disable cache",
 			default: true,
 		},
-		"tool-name-strategy": {
+		toolNameStrategy: {
 			type: "enum",
 			short: "t",
 			default: "domain",
 			choices: TOOL_NAME_STRATEGIES,
 			description: "Tool name strategy",
+			toKebab: true,
 		},
-		"max-length": {
+		maxLength: {
 			type: "number",
 			short: "l",
 			default: 2000,
 			description: "Maximum length of the content to return",
+			toKebab: true,
 		},
 	},
 
@@ -76,11 +79,11 @@ $ sitemcp https://ryoppippi.com --no-cache`,
 			url,
 			concurrency,
 			match,
-			"content-selector": contentSelector,
+			contentSelector,
 			limit,
 			cache,
-			"tool-name-strategy": toolNameStrategy,
-			"max-length": maxLength,
+			toolNameStrategy,
+			maxLength,
 		} = ctx.values;
 
 		// Validate toolNameStrategy
