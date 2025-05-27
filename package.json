@@ -1,7 +1,7 @@
 {
 	"version": "0.5.6",
 	"name": "sitemcp",
-	"description": "Fetch an entire site and use it as a MCP Server",
+	"description": "Fetch an entire site and use it as an MCP Server",
 	"repository": "ryoppippi/sitemcp",
 	"funding": "https://github.com/ryoppippi/sitemcp?sponsor=1",
 	"bin": "./dist/cli.mjs",
