@@ -4,6 +4,7 @@ import { startServer } from "./server.ts";
 import { TOOL_NAME_STRATEGIES, type ToolNameStrategy } from "./types.ts";
 
 const command = define({
+	toKebab: true,
 	args: {
 		url: {
 			type: "positional",
@@ -23,7 +24,6 @@ const command = define({
 		},
 		contentSelector: {
 			type: "string",
-			toKebab: true,
 			description: "The CSS selector to find content",
 		},
 		limit: {
@@ -42,14 +42,12 @@ const command = define({
 			default: "domain",
 			choices: TOOL_NAME_STRATEGIES,
 			description: "Tool name strategy",
-			toKebab: true,
 		},
 		maxLength: {
 			type: "number",
 			short: "l",
 			default: 2000,
 			description: "Maximum length of the content to return",
-			toKebab: true,
 		},
 	},
 
