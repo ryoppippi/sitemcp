@@ -119,6 +119,14 @@ The below example configuration for Claude Desktop
 
 MIT.
 
+## Sponsors
+
+<p align="center">
+	<a href="https://github.com/sponsors/ryoppippi">
+		<img src="https://cdn.jsdelivr.net/gh/ryoppippi/sponsors/sponsors.svg">
+	</a>
+</p>
+
 ## Stats
 
 <a href="https://www.star-history.com/#ryoppippi/sitemcp&Date">
