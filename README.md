@@ -124,7 +124,7 @@ MIT.
 <!-- spellchecker:disable-line -->
 <p align="center">
 	<a href="https://github.com/sponsors/ryoppippi">
-		<img src="https://cdn.jsdelivr.net/gh/ryoppippi/sponsors/sponsors.svg">
+		<img src="https://cdn.jsdelivr.net/gh/ryoppippi/sponsors@main/sponsors.svg">
 	</a>
 </p>
 
