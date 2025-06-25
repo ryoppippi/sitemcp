@@ -49,9 +49,8 @@
 		"p-queue": "^8.0.1",
 		"picocolors": "^1.1.1",
 		"publint": "^0.3.10",
-		"rollup-plugin-node-externals": "^8.0.1",
 		"simple-git-hooks": "^2.12.1",
-		"tsdown": "^0.6.10",
+		"tsdown": "^0.12.9",
 		"ufo": "^1.6.0",
 		"unplugin-unused": "^0.4.4"
 	},
