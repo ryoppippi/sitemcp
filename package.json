@@ -9,7 +9,7 @@
 	"type": "module",
 	"scripts": {
 		"release": "bun lint && bun typecheck && bun test && bun run build && bumpp",
-		"build": "tsdown",
+		"build": "bun -b tsdown",
 		"start": "node ./dist/cli.mjs",
 		"lint": "biome check .",
 		"format": "biome check --write .",
