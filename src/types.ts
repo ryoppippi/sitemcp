@@ -30,6 +30,11 @@ export type Options = {
 	 * Can be boolean (auto-detect) or string (custom sitemap URL)
 	 */
 	sitemap?: boolean | string;
+
+	/**
+	 * Timeout in seconds for site fetching
+	 */
+	timeout?: number;
 };
 
 export type Page = {

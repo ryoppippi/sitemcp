@@ -60,8 +60,8 @@ const command = define({
 		},
 		timeout: {
 			type: "number",
-			description: "Timeout in seconds for site fetching (default: 300)",
-			default: 300,
+			description: "Timeout in seconds for site fetching (default: 60)",
+			default: 60,
 		},
 	},
 
@@ -130,7 +130,7 @@ $ sitemcp https://example.com --sitemap-url /custom-sitemap.xml`,
 			maxLength: maxLength ?? 2000,
 			url,
 			sitemap: sitemapUrl || sitemap,
-			timeout: timeout ?? 300,
+			timeout: timeout ?? 25,
 		});
 	},
 });

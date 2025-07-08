@@ -2,7 +2,10 @@ import { defineConfig } from "tsdown";
 
 const config: ReturnType<typeof defineConfig> = defineConfig({
 	outDir: "dist",
-	entry: "src/cli.ts",
+	entry: {
+		cli: "src/cli.ts",
+		worker: "src/worker.ts",
+	},
 	fixedExtension: true,
 	publint: true,
 	dts: false,

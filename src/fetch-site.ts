@@ -21,16 +21,24 @@ class Fetcher {
 	#pages: FetchSiteResult = new Map();
 	#fetched: Set<string> = new Set();
 	#queue: Queue;
+	#startTime = 0;
+	#globalTimeoutMs: number;
 	options: Options;
 
 	constructor(options: Options) {
-		const concurrency = options.concurrency || 10;
+		const concurrency = options.concurrency || 3;
 		this.#queue = new Queue({ concurrency });
 		this.options = options;
+		this.#globalTimeoutMs = (options.timeout || 60) * 1000; // default 60 seconds
 	}
 
 	#limitReached() {
 		return this.options.limit && this.#pages.size >= this.options.limit;
+	}
+
+	#shouldTerminateEarly() {
+		const elapsed = Date.now() - this.#startTime;
+		return elapsed >= this.#globalTimeoutMs;
 	}
 
 	#getContentSelector(pathname: string) {
@@ -201,22 +209,40 @@ class Fetcher {
 	}
 
 	async fetchSite(url: string) {
+		this.#startTime = Date.now();
 		logger.info(
-			`Started fetching ${c.green(url)} with a concurrency of ${
-				this.#queue.concurrency
-			}`,
+			`Started fetching ${c.green(url)} with a concurrency of ${this.#queue.concurrency}`,
 		);
 
 		// Try to fetch from sitemap first if enabled
-		if (this.options.sitemap) {
+		if (this.options.sitemap && !this.#shouldTerminateEarly()) {
 			await this.#fetchFromSitemap(url);
 		}
 
-		await this.#fetchPage(url, {
-			skipMatch: true,
-		});
+		if (!this.#shouldTerminateEarly()) {
+			await this.#fetchPage(url, {
+				skipMatch: true,
+			});
+		}
 
-		await this.#queue.onIdle();
+		// Wait for queue to empty or timeout
+		const maxWaitTime = Math.max(
+			0,
+			this.#globalTimeoutMs - (Date.now() - this.#startTime),
+		);
+
+		if (maxWaitTime > 0) {
+			await Promise.race([
+				this.#queue.onIdle(),
+				new Promise((resolve) => setTimeout(resolve, maxWaitTime)),
+			]);
+		}
+
+		if (this.#shouldTerminateEarly()) {
+			logger.warn(
+				`Fetching terminated early after ${this.#globalTimeoutMs}ms. Fetched ${this.#pages.size} pages.`,
+			);
+		}
 
 		return this.#pages;
 	}
@@ -229,7 +255,11 @@ class Fetcher {
 	) {
 		const { host, pathname } = new URL(url);
 
-		if (this.#fetched.has(pathname) || this.#limitReached()) {
+		if (
+			this.#fetched.has(pathname) ||
+			this.#limitReached() ||
+			this.#shouldTerminateEarly()
+		) {
 			return;
 		}
 
@@ -248,9 +278,14 @@ class Fetcher {
 
 		logger.info(`Fetching ${c.green(url)}`);
 
-		// Add timeout to prevent hanging on slow pages
+		// Add timeout to prevent hanging on slow pages - use shorter timeout for faster processing
 		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+		const remainingTime = Math.max(
+			5000,
+			this.#globalTimeoutMs - (Date.now() - this.#startTime),
+		);
+		const pageTimeout = Math.min(15000, remainingTime); // Max 15 seconds per page
+		const timeoutId = setTimeout(() => controller.abort(), pageTimeout);
 
 		let res: Response;
 		try {
@@ -278,7 +313,7 @@ class Fetcher {
 			return;
 		}
 
-		if (this.#limitReached()) {
+		if (this.#limitReached() || this.#shouldTerminateEarly()) {
 			return;
 		}
 
@@ -301,31 +336,40 @@ class Fetcher {
 		const $ = load(await res.text());
 		$("script,style,link,img,video").remove();
 
-		$("a").each((_, el) => {
-			const href = $(el).attr("href");
+		// Only process links if we have time remaining
+		if (!this.#shouldTerminateEarly()) {
+			$("a").each((_, el) => {
+				const href = $(el).attr("href");
 
-			if (!href) {
-				return;
-			}
-
-			try {
-				const thisUrl = new URL(href, url);
-				if (thisUrl.host !== host) {
+				if (!href) {
 					return;
 				}
 
-				extraUrls.push(thisUrl.href);
-			} catch {
-				logger.warn(`Failed to parse URL: ${href}`);
-			}
-		});
+				try {
+					const thisUrl = new URL(href, url);
+					if (thisUrl.host !== host) {
+						return;
+					}
 
-		if (extraUrls.length > 0) {
-			for (const url of extraUrls) {
-				this.#queue.add(() =>
-					this.#fetchPage(url, { ...options, skipMatch: false }),
-				);
+					extraUrls.push(thisUrl.href);
+				} catch {
+					logger.warn(`Failed to parse URL: ${href}`);
+				}
+			});
+
+			if (extraUrls.length > 0 && !this.#shouldTerminateEarly()) {
+				for (const url of extraUrls) {
+					this.#queue.add(() =>
+						this.#fetchPage(url, { ...options, skipMatch: false }),
+					);
+				}
 			}
+		}
+
+		// Skip content processing if we're running out of time
+		if (this.#shouldTerminateEarly()) {
+			logger.info(`Skipping content processing for ${pathname} due to timeout`);
+			return;
 		}
 
 		const window = new Window({
@@ -357,6 +401,12 @@ class Fetcher {
 		await window.happyDOM.close();
 
 		if (!article) {
+			return;
+		}
+
+		// Final check before processing content
+		if (this.#shouldTerminateEarly()) {
+			logger.info(`Skipping content conversion for ${pathname} due to timeout`);
 			return;
 		}
 
