@@ -72,9 +72,10 @@ export async function startServer(
 				const timeoutMs = (timeout ?? 60) * 1000;
 
 				// Create worker for background fetching
-				const isDev = import.meta.dirname.includes("src");
+				const currentDir = path.dirname(new URL(import.meta.url).pathname);
+				const isDev = currentDir.includes("src");
 				const workerFile = isDev ? "worker.ts" : "worker.mjs";
-				const workerPath = path.join(import.meta.dirname, workerFile);
+				const workerPath = path.join(currentDir, workerFile);
 				worker = new Worker(workerPath);
 
 				const workerPromise = new Promise<FetchSiteResult>(
@@ -105,11 +106,11 @@ export async function startServer(
 				const timeoutPromise = new Promise<never>((_, reject) => {
 					setTimeout(() => {
 						worker?.terminate();
-						reject(
-							new Error(
-								`Site fetching timed out after ${timeout ?? 60} seconds`,
-							),
+						const abortError = new Error(
+							`Site fetching for ${url} timed out after ${timeout ?? 60} seconds`,
 						);
+						abortError.name = "AbortError";
+						reject(abortError);
 					}, timeoutMs);
 				});
 
@@ -167,8 +168,8 @@ export async function startServer(
 	};
 
 	// Start background fetching but don't wait for it
-	startBackgroundFetching().catch(() => {
-		// Error already logged in startBackgroundFetching
+	startBackgroundFetching().catch((error) => {
+		logger.warn("Error during background fetching:", error);
 	});
 
 	const indexServerName =
@@ -285,8 +286,8 @@ export async function startServer(
 					logger.info(
 						`Triggering background fetch for missing page: ${subpath}`,
 					);
-					startBackgroundFetching().catch(() => {
-						// Error already logged in startBackgroundFetching
+					startBackgroundFetching().catch((error) => {
+						logger.warn("Error during background fetching:", error);
 					});
 				}
 

@@ -129,7 +129,7 @@ $ sitemcp https://example.com --sitemap-url /custom-sitemap.xml`,
 			toolNameStrategy: (toolNameStrategy as ToolNameStrategy) ?? "domain",
 			maxLength: maxLength ?? 2000,
 			url,
-			sitemap: sitemapUrl || sitemap,
+			sitemap: sitemapUrl !== undefined ? sitemapUrl : sitemap,
 			timeout: timeout ?? 25,
 		});
 	},

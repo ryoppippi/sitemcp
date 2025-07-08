@@ -282,7 +282,7 @@ class Fetcher {
 		const controller = new AbortController();
 		const remainingTime = Math.max(
 			5000,
-			this.#globalTimeoutMs - (Date.now() - this.#startTime),
+			Math.max(0, this.#globalTimeoutMs - (Date.now() - this.#startTime)),
 		);
 		const pageTimeout = Math.min(15000, remainingTime); // Max 15 seconds per page
 		const timeoutId = setTimeout(() => controller.abort(), pageTimeout);
