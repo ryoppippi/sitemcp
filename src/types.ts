@@ -24,6 +24,12 @@ export type Options = {
 	 * A custom function to fetch URL
 	 */
 	fetch?: (url: string, init: RequestInit) => Promise<Response>;
+
+	/**
+	 * Use sitemap.xml to discover URLs
+	 * Can be boolean (auto-detect) or string (custom sitemap URL)
+	 */
+	sitemap?: boolean | string;
 };
 
 export type Page = {
@@ -50,4 +56,6 @@ export interface StartServerOptions {
 	maxLength: number;
 	match?: string | string[];
 	limit?: number;
+	sitemap?: boolean | string;
+	timeout?: number;
 }

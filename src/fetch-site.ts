@@ -24,7 +24,7 @@ class Fetcher {
 	options: Options;
 
 	constructor(options: Options) {
-		const concurrency = options.concurrency || 3;
+		const concurrency = options.concurrency || 10;
 		this.#queue = new Queue({ concurrency });
 		this.options = options;
 	}
@@ -40,12 +40,177 @@ class Fetcher {
 		return this.options.contentSelector;
 	}
 
+	async #fetchFromSitemap(baseUrl: string) {
+		const { host } = new URL(baseUrl);
+		const sitemapUrls = await this.#discoverSitemapUrls(baseUrl);
+
+		logger.info(`Found ${sitemapUrls.length} sitemap(s) to process`);
+
+		for (const sitemapUrl of sitemapUrls) {
+			try {
+				const urls = await this.#parseSitemap(sitemapUrl);
+				logger.info(`Extracted ${urls.length} URLs from ${sitemapUrl}`);
+
+				for (const url of urls) {
+					// Only process URLs from the same host
+					try {
+						const urlObj = new URL(url);
+						if (urlObj.host === host) {
+							this.#queue.add(() => this.#fetchPage(url, { skipMatch: false }));
+						}
+					} catch {
+						logger.warn(`Invalid URL from sitemap: ${url}`);
+					}
+				}
+			} catch (error) {
+				logger.warn(`Failed to parse sitemap ${sitemapUrl}: ${error}`);
+			}
+		}
+	}
+
+	async #discoverSitemapUrls(baseUrl: string): Promise<string[]> {
+		const sitemapUrls: string[] = [];
+		const { origin } = new URL(baseUrl);
+
+		// If sitemap is a custom URL, use it directly
+		if (typeof this.options.sitemap === "string") {
+			const customSitemapUrl = new URL(this.options.sitemap, origin).href;
+			sitemapUrls.push(customSitemapUrl);
+			return sitemapUrls;
+		}
+
+		// Try common sitemap locations
+		const commonSitemapPaths = ["/sitemap.xml", "/sitemap_index.xml"];
+
+		for (const path of commonSitemapPaths) {
+			const sitemapUrl = `${origin}${path}`;
+			try {
+				const res = await (this.options.fetch || fetch)(sitemapUrl, {
+					headers: {
+						"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
+					},
+				});
+
+				if (res.ok && res.headers.get("content-type")?.includes("xml")) {
+					sitemapUrls.push(sitemapUrl);
+					logger.info(`Found sitemap at ${sitemapUrl}`);
+				}
+			} catch {
+				// Ignore errors for sitemap discovery
+			}
+		}
+
+		// Check robots.txt for sitemap references only if no sitemaps found in common locations
+		if (sitemapUrls.length === 0) {
+			try {
+				const robotsUrl = `${origin}/robots.txt`;
+				const robotsRes = await (this.options.fetch || fetch)(robotsUrl, {
+					headers: {
+						"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
+					},
+				});
+
+				if (robotsRes.ok) {
+					const robotsText = await robotsRes.text();
+					const sitemapMatches = robotsText.match(/^sitemap:\s*(.+)$/gim);
+
+					if (sitemapMatches) {
+						for (const match of sitemapMatches) {
+							const sitemapUrl = match.replace(/^sitemap:\s*/i, "").trim();
+							if (sitemapUrl && !sitemapUrls.includes(sitemapUrl)) {
+								sitemapUrls.push(sitemapUrl);
+								logger.info(`Found sitemap in robots.txt: ${sitemapUrl}`);
+							}
+						}
+					}
+				}
+			} catch {
+				// Ignore robots.txt errors
+			}
+		}
+
+		return sitemapUrls;
+	}
+
+	async #parseSitemap(sitemapUrl: string): Promise<string[]> {
+		const urls: string[] = [];
+
+		try {
+			const res = await (this.options.fetch || fetch)(sitemapUrl, {
+				headers: {
+					"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
+				},
+			});
+
+			if (!res.ok) {
+				throw new Error(`Failed to fetch sitemap: ${res.statusText}`);
+			}
+
+			const xmlContent = await res.text();
+			const $ = load(xmlContent, { xmlMode: true });
+
+			// Check if this is a sitemap index
+			if ($("sitemapindex").length > 0) {
+				// This is a sitemap index, parse sub-sitemaps
+				$("sitemap loc").each((_, el) => {
+					const loc = $(el).text().trim();
+					if (loc) {
+						urls.push(loc);
+					}
+				});
+
+				// Recursively parse sub-sitemaps
+				const subSitemapUrls: string[] = [];
+				for (const subSitemapUrl of urls) {
+					try {
+						const subUrls = await this.#parseSitemap(subSitemapUrl);
+						subSitemapUrls.push(...subUrls);
+					} catch (error) {
+						logger.warn(
+							`Failed to parse sub-sitemap ${subSitemapUrl}: ${error}`,
+						);
+					}
+				}
+
+				return subSitemapUrls;
+			}
+			// This is a regular sitemap
+			$("url loc").each((_, el) => {
+				const loc = $(el).text().trim();
+				if (loc) {
+					// Apply pattern matching if match patterns are specified
+					if (this.options.match && this.options.match.length > 0) {
+						try {
+							const urlObj = new URL(loc);
+							if (matchPath(urlObj.pathname, this.options.match)) {
+								urls.push(loc);
+							}
+						} catch {
+							// Skip invalid URLs
+						}
+					} else {
+						urls.push(loc);
+					}
+				}
+			});
+		} catch (error) {
+			logger.warn(`Error parsing sitemap ${sitemapUrl}: ${error}`);
+		}
+
+		return urls;
+	}
+
 	async fetchSite(url: string) {
 		logger.info(
 			`Started fetching ${c.green(url)} with a concurrency of ${
 				this.#queue.concurrency
 			}`,
 		);
+
+		// Try to fetch from sitemap first if enabled
+		if (this.options.sitemap) {
+			await this.#fetchFromSitemap(url);
+		}
 
 		await this.#fetchPage(url, {
 			skipMatch: true,
@@ -75,6 +240,7 @@ class Fetcher {
 		if (
 			!options.skipMatch &&
 			this.options.match &&
+			this.options.match.length > 0 &&
 			!matchPath(pathname, this.options.match)
 		) {
 			return;
@@ -82,14 +248,33 @@ class Fetcher {
 
 		logger.info(`Fetching ${c.green(url)}`);
 
-		const res = await (this.options.fetch || fetch)(url, {
-			headers: {
-				"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
-			},
-		});
+		// Add timeout to prevent hanging on slow pages
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-		if (!res.ok) {
-			logger.warn(`Failed to fetch ${url}: ${res.statusText}`);
+		let res: Response;
+		try {
+			res = await (this.options.fetch || fetch)(url, {
+				headers: {
+					"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
+				},
+				signal: controller.signal,
+			});
+			clearTimeout(timeoutId);
+
+			if (!res.ok) {
+				logger.warn(`Failed to fetch ${url}: ${res.statusText}`);
+				return;
+			}
+		} catch (error) {
+			clearTimeout(timeoutId);
+			if (error instanceof Error && error.name === "AbortError") {
+				logger.warn(`Timeout fetching ${url}`);
+			} else {
+				logger.warn(
+					`Failed to fetch ${url}: ${error instanceof Error ? error.message : "Unknown error"}`,
+				);
+			}
 			return;
 		}
 

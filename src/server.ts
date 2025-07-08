@@ -27,6 +27,8 @@ export async function startServer(
 		maxLength,
 		match,
 		limit,
+		sitemap,
+		timeout,
 	} = options;
 
 	// create server instance
@@ -59,12 +61,37 @@ export async function startServer(
 	}
 
 	if (pages == null) {
-		pages = await fetchSite(url, {
-			concurrency,
-			match: (match && ensureArray(match)) as string[],
-			contentSelector,
-			limit,
+		// Add timeout to prevent hanging during site fetching
+		const timeoutMs = (timeout ?? 300) * 1000; // Convert seconds to milliseconds
+		const timeoutPromise = new Promise<never>((_, reject) => {
+			setTimeout(
+				() =>
+					reject(
+						new Error(
+							`Site fetching timed out after ${timeout ?? 300} seconds`,
+						),
+					),
+				timeoutMs,
+			);
 		});
+
+		try {
+			pages = await Promise.race([
+				fetchSite(url, {
+					concurrency,
+					match: (match && ensureArray(match)) as string[],
+					contentSelector,
+					limit,
+					sitemap,
+				}),
+				timeoutPromise,
+			]);
+		} catch (error) {
+			logger.warn(
+				`Site fetching failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+			);
+			pages = new Map(); // Continue with empty pages to allow server to start
+		}
 	}
 
 	if (pages.size === 0) {

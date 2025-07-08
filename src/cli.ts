@@ -49,6 +49,20 @@ const command = define({
 			default: 2000,
 			description: "Maximum length of the content to return",
 		},
+		sitemap: {
+			type: "boolean",
+			short: "s",
+			description: "Use sitemap.xml to discover URLs (auto-detect)",
+		},
+		sitemapUrl: {
+			type: "string",
+			description: "Custom sitemap URL path",
+		},
+		timeout: {
+			type: "number",
+			description: "Timeout in seconds for site fetching (default: 300)",
+			default: 300,
+		},
 	},
 
 	examples: `# Basic usage
@@ -70,7 +84,13 @@ $ sitemcp https://vite.dev --content-selector ".content"
 $ sitemcp https://vite.dev -l 10000
 
 # Without cache
-$ sitemcp https://ryoppippi.com --no-cache`,
+$ sitemcp https://ryoppippi.com --no-cache
+
+# With sitemap auto-detection
+$ sitemcp https://nextjs.org --sitemap
+
+# With custom sitemap URL
+$ sitemcp https://example.com --sitemap-url /custom-sitemap.xml`,
 
 	run: async (ctx) => {
 		const {
@@ -82,6 +102,9 @@ $ sitemcp https://ryoppippi.com --no-cache`,
 			cache,
 			toolNameStrategy,
 			maxLength,
+			sitemap,
+			sitemapUrl,
+			timeout,
 		} = ctx.values;
 
 		// Validate toolNameStrategy
@@ -106,6 +129,8 @@ $ sitemcp https://ryoppippi.com --no-cache`,
 			toolNameStrategy: (toolNameStrategy as ToolNameStrategy) ?? "domain",
 			maxLength: maxLength ?? 2000,
 			url,
+			sitemap: sitemapUrl || sitemap,
+			timeout: timeout ?? 300,
 		});
 	},
 });
