@@ -1,11 +1,12 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { Worker } from "node:worker_threads";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { stringify } from "@std/yaml";
+import { createBirpc } from "birpc";
 import { z } from "zod";
 import { version } from "../package.json";
-import { fetchSite } from "./fetch-site.ts";
 import { logger } from "./logger.ts";
 import type { FetchSiteResult, StartServerOptions } from "./types.ts";
 import {
@@ -27,6 +28,8 @@ export async function startServer(
 		maxLength,
 		match,
 		limit,
+		sitemap,
+		timeout,
 	} = options;
 
 	// create server instance
@@ -42,46 +45,147 @@ export async function startServer(
 	const catchDir = cacheDirectory();
 	const cacheFile = path.join(catchDir, `${sanitisedUrl}.json`);
 
-	let pages: FetchSiteResult | undefined = undefined;
+	let pages: FetchSiteResult = new Map();
+	let isFetching = false;
+	let fetchingPromise: Promise<void> | null = null;
+	let worker: Worker | null = null;
 
-	if (cache) {
-		// check if cache exists
-		if (fs.existsSync(cacheFile)) {
-			logger.info("Using cache file", cacheFile);
-			const json = fs.readFileSync(cacheFile, "utf-8");
+	// Load from cache if available
+	if (cache && fs.existsSync(cacheFile)) {
+		logger.info("Using cache file", cacheFile);
+		const json = fs.readFileSync(cacheFile, "utf-8");
+		try {
+			pages = new Map(Object.entries(JSON.parse(json)));
+			logger.info(`Loaded ${pages.size} pages from cache`);
+		} catch (e) {
+			logger.warn("Cache file is invalid, ignoring");
+			pages = new Map();
+		}
+	}
+
+	// Start background fetching (don't wait for completion)
+	const startBackgroundFetching = async () => {
+		if (isFetching) return fetchingPromise;
+
+		isFetching = true;
+		fetchingPromise = (async () => {
 			try {
-				pages = new Map(Object.entries(JSON.parse(json)));
-			} catch (e) {
-				logger.warn("Cache file is invalid, ignoring");
-				pages = undefined;
+				const timeoutMs = (timeout ?? 60) * 1000;
+
+				// Create worker for background fetching
+				const currentDir = path.dirname(new URL(import.meta.url).pathname);
+				const isDev = currentDir.includes("src");
+				const workerFile = isDev ? "worker.ts" : "worker.mjs";
+				const workerPath = path.join(currentDir, workerFile);
+				worker = new Worker(workerPath);
+
+				// Create birpc instance for main thread
+				const rpc = createBirpc<{
+					startFetch: (
+						url: string,
+						options: {
+							concurrency?: number;
+							match?: string[];
+							contentSelector?: string;
+							limit?: number;
+							sitemap?: boolean | string;
+							timeout?: number;
+						},
+					) => Promise<
+						Array<[string, { title: string; url: string; content: string }]>
+					>;
+					abortFetch: () => void;
+				}>(
+					{},
+					{
+						post: (data) => worker?.postMessage(data),
+						on: (fn) => worker?.on("message", fn),
+					},
+				);
+
+				// Handle worker error and exit events
+				const workerErrorPromise = new Promise<never>((_, reject) => {
+					worker?.on("error", reject);
+					worker?.on("exit", (code) => {
+						if (code !== 0) {
+							reject(new Error(`Worker stopped with exit code ${code}`));
+						}
+					});
+				});
+
+				const timeoutPromise = new Promise<never>((_, reject) => {
+					setTimeout(() => {
+						rpc.abortFetch();
+						worker?.terminate();
+						const abortError = new Error(
+							`Site fetching for ${url} timed out after ${timeout ?? 60} seconds`,
+						);
+						abortError.name = "AbortError";
+						reject(abortError);
+					}, timeoutMs);
+				});
+
+				// Start fetch using birpc
+				const fetchPromise = rpc.startFetch(url, {
+					concurrency,
+					match: (match && ensureArray(match)) as string[],
+					contentSelector,
+					limit,
+					sitemap,
+					timeout,
+				});
+
+				const dataArray = await Promise.race([
+					fetchPromise,
+					timeoutPromise,
+					workerErrorPromise,
+				]);
+				const freshPages = new Map(dataArray);
+
+				// Merge fresh pages with existing pages
+				for (const [key, value] of freshPages) {
+					pages.set(
+						key as string,
+						value as { title: string; url: string; content: string },
+					);
+				}
+
+				if (cache) {
+					// create cache dir if not exists
+					if (!fs.existsSync(catchDir)) {
+						await fs.promises.mkdir(catchDir, { recursive: true });
+					}
+					// write to cache file
+					const json = JSON.stringify(Object.fromEntries(pages), null, 2);
+					await fs.promises.writeFile(cacheFile, json, "utf-8");
+					logger.info("Cache file written to", cacheFile);
+				}
+
+				logger.info(
+					`Background fetching completed. Total pages: ${pages.size}`,
+				);
+			} catch (error) {
+				logger.warn(
+					`Background site fetching failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+				);
+			} finally {
+				// Clean up worker
+				if (worker) {
+					worker.terminate();
+					worker = null;
+				}
+				isFetching = false;
+				fetchingPromise = null;
 			}
-		}
-	}
+		})();
 
-	if (pages == null) {
-		pages = await fetchSite(url, {
-			concurrency,
-			match: (match && ensureArray(match)) as string[],
-			contentSelector,
-			limit,
-		});
-	}
+		return fetchingPromise;
+	};
 
-	if (pages.size === 0) {
-		logger.warn("No pages found");
-		return server;
-	}
-
-	if (cache) {
-		// create cache dir if not exists
-		if (!fs.existsSync(catchDir)) {
-			fs.promises.mkdir(catchDir, { recursive: true });
-		}
-		// write to cache file
-		const json = JSON.stringify(Object.fromEntries(pages), null, 2);
-		await fs.promises.writeFile(cacheFile, json, "utf-8");
-		logger.info("Cache file written to", cacheFile);
-	}
+	// Start background fetching but don't wait for it
+	startBackgroundFetching().catch((error) => {
+		logger.warn("Error during background fetching:", error);
+	});
 
 	const indexServerName =
 		`indexOf${sanitiseToolName(url, toolNameStrategy)}` as const;
@@ -125,13 +229,22 @@ export async function startServer(
 				index = newIndex;
 			}
 
+			const status = isFetching ? "fetching" : "ready";
+
 			if (index.length === 0) {
-				logger.warn("No pages found");
+				const message = isFetching
+					? "Site is being fetched in the background. Please try again in a moment."
+					: "No pages found";
+				logger.warn(message);
 				return {
 					content: [
 						{
 							type: "text",
-							text: "No pages found",
+							text: stringify({
+								status,
+								message,
+								totalPages: pages.size,
+							}),
 						},
 					],
 				};
@@ -142,9 +255,11 @@ export async function startServer(
 					{
 						type: "text",
 						text: stringify({
+							status,
 							index,
 							remainingIndexLength,
 							startIndex: start_index,
+							totalPages: pages.size,
 						}),
 					},
 				],
@@ -176,12 +291,32 @@ export async function startServer(
 			const page = pages.get(subpath);
 
 			if (!page) {
-				logger.warn(`Page ${subpath} not found`);
+				const status = isFetching ? "fetching" : "ready";
+				const message = isFetching
+					? `Page ${subpath} is being fetched in the background. Please try again in a moment.`
+					: `Page ${subpath} not found`;
+
+				// If we're not fetching and the page doesn't exist, trigger background fetch
+				if (!isFetching) {
+					logger.info(
+						`Triggering background fetch for missing page: ${subpath}`,
+					);
+					startBackgroundFetching().catch((error) => {
+						logger.warn("Error during background fetching:", error);
+					});
+				}
+
+				logger.warn(message);
 				return {
 					content: [
 						{
 							type: "text",
-							text: `Page ${subpath} not found`,
+							text: stringify({
+								status,
+								message,
+								subpath,
+								totalPages: pages.size,
+							}),
 						},
 					],
 				};

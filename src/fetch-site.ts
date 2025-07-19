@@ -6,7 +6,7 @@ import c from "picocolors";
 import { logger } from "./logger.ts";
 import { toMarkdown } from "./to-markdown.ts";
 import type { FetchSiteResult, Options } from "./types.ts";
-import { matchPath } from "./utils.ts";
+import { generateMatchPatternFromUrl, matchPath } from "./utils.ts";
 
 export async function fetchSite(
 	url: string,
@@ -21,16 +21,26 @@ class Fetcher {
 	#pages: FetchSiteResult = new Map();
 	#fetched: Set<string> = new Set();
 	#queue: Queue;
+	#startTime = 0;
+	#globalTimeoutMs: number;
+	#abortSignal?: AbortSignal;
 	options: Options;
 
 	constructor(options: Options) {
 		const concurrency = options.concurrency || 3;
 		this.#queue = new Queue({ concurrency });
 		this.options = options;
+		this.#abortSignal = options.signal;
+		this.#globalTimeoutMs = (options.timeout || 60) * 1000; // default 60 seconds
 	}
 
 	#limitReached() {
 		return this.options.limit && this.#pages.size >= this.options.limit;
+	}
+
+	#shouldTerminateEarly() {
+		const elapsed = Date.now() - this.#startTime;
+		return elapsed >= this.#globalTimeoutMs || this.#abortSignal?.aborted;
 	}
 
 	#getContentSelector(pathname: string) {
@@ -40,18 +50,221 @@ class Fetcher {
 		return this.options.contentSelector;
 	}
 
+	async #fetchFromSitemap(baseUrl: string) {
+		const { host, pathname } = new URL(baseUrl);
+		const sitemapUrls = await this.#discoverSitemapUrls(baseUrl);
+
+		logger.info(`Found ${sitemapUrls.length} sitemap(s) to process`);
+
+		// Generate base path pattern for filtering
+		const basePathPatterns = generateMatchPatternFromUrl(baseUrl);
+		const shouldFilterByBasePath = basePathPatterns.length > 0;
+
+		for (const sitemapUrl of sitemapUrls) {
+			try {
+				const urls = await this.#parseSitemap(sitemapUrl);
+				logger.info(`Extracted ${urls.length} URLs from ${sitemapUrl}`);
+
+				for (const url of urls) {
+					// Only process URLs from the same host
+					try {
+						const urlObj = new URL(url);
+						if (urlObj.host !== host) {
+							continue;
+						}
+
+						// Filter by base path if the base URL has a specific path
+						if (shouldFilterByBasePath) {
+							const matchesBasePath = matchPath(
+								urlObj.pathname,
+								basePathPatterns,
+							);
+							if (!matchesBasePath) {
+								continue;
+							}
+						}
+
+						this.#queue.add(() => this.#fetchPage(url, { skipMatch: false }));
+					} catch {
+						logger.warn(`Invalid URL from sitemap: ${url}`);
+					}
+				}
+			} catch (error) {
+				logger.warn(`Failed to parse sitemap ${sitemapUrl}: ${error}`);
+			}
+		}
+	}
+
+	async #discoverSitemapUrls(baseUrl: string): Promise<string[]> {
+		const sitemapUrls: string[] = [];
+		const { origin } = new URL(baseUrl);
+
+		// If sitemap is a custom URL, use it directly
+		if (typeof this.options.sitemap === "string") {
+			const customSitemapUrl = new URL(this.options.sitemap, origin).href;
+			sitemapUrls.push(customSitemapUrl);
+			return sitemapUrls;
+		}
+
+		// Try common sitemap locations
+		const commonSitemapPaths = ["/sitemap.xml", "/sitemap_index.xml"];
+
+		for (const path of commonSitemapPaths) {
+			const sitemapUrl = `${origin}${path}`;
+			try {
+				const res = await (this.options.fetch || fetch)(sitemapUrl, {
+					headers: {
+						"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
+					},
+					signal: this.#abortSignal,
+				});
+
+				if (res.ok && res.headers.get("content-type")?.includes("xml")) {
+					sitemapUrls.push(sitemapUrl);
+					logger.info(`Found sitemap at ${sitemapUrl}`);
+				}
+			} catch {
+				// Ignore errors for sitemap discovery
+			}
+		}
+
+		// Check robots.txt for sitemap references only if no sitemaps found in common locations
+		if (sitemapUrls.length === 0) {
+			try {
+				const robotsUrl = `${origin}/robots.txt`;
+				const robotsRes = await (this.options.fetch || fetch)(robotsUrl, {
+					headers: {
+						"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
+					},
+					signal: this.#abortSignal,
+				});
+
+				if (robotsRes.ok) {
+					const robotsText = await robotsRes.text();
+					const sitemapMatches = robotsText.match(/^sitemap:\s*(.+)$/gim);
+
+					if (sitemapMatches) {
+						for (const match of sitemapMatches) {
+							const sitemapUrl = match.replace(/^sitemap:\s*/i, "").trim();
+							if (sitemapUrl && !sitemapUrls.includes(sitemapUrl)) {
+								sitemapUrls.push(sitemapUrl);
+								logger.info(`Found sitemap in robots.txt: ${sitemapUrl}`);
+							}
+						}
+					}
+				}
+			} catch {
+				// Ignore robots.txt errors
+			}
+		}
+
+		return sitemapUrls;
+	}
+
+	async #parseSitemap(sitemapUrl: string): Promise<string[]> {
+		const urls: string[] = [];
+
+		try {
+			const res = await (this.options.fetch || fetch)(sitemapUrl, {
+				headers: {
+					"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
+				},
+				signal: this.#abortSignal,
+			});
+
+			if (!res.ok) {
+				throw new Error(`Failed to fetch sitemap: ${res.statusText}`);
+			}
+
+			const xmlContent = await res.text();
+			const $ = load(xmlContent, { xmlMode: true });
+
+			// Check if this is a sitemap index
+			if ($("sitemapindex").length > 0) {
+				// This is a sitemap index, parse sub-sitemaps
+				$("sitemap loc").each((_, el) => {
+					const loc = $(el).text().trim();
+					if (loc) {
+						urls.push(loc);
+					}
+				});
+
+				// Recursively parse sub-sitemaps
+				const subSitemapUrls: string[] = [];
+				for (const subSitemapUrl of urls) {
+					try {
+						const subUrls = await this.#parseSitemap(subSitemapUrl);
+						subSitemapUrls.push(...subUrls);
+					} catch (error) {
+						logger.warn(
+							`Failed to parse sub-sitemap ${subSitemapUrl}: ${error}`,
+						);
+					}
+				}
+
+				return subSitemapUrls;
+			}
+			// This is a regular sitemap
+			$("url loc").each((_, el) => {
+				const loc = $(el).text().trim();
+				if (loc) {
+					// Apply pattern matching if match patterns are specified
+					if (this.options.match && this.options.match.length > 0) {
+						try {
+							const urlObj = new URL(loc);
+							if (matchPath(urlObj.pathname, this.options.match)) {
+								urls.push(loc);
+							}
+						} catch {
+							// Skip invalid URLs
+						}
+					} else {
+						urls.push(loc);
+					}
+				}
+			});
+		} catch (error) {
+			logger.warn(`Error parsing sitemap ${sitemapUrl}: ${error}`);
+		}
+
+		return urls;
+	}
+
 	async fetchSite(url: string) {
+		this.#startTime = Date.now();
 		logger.info(
-			`Started fetching ${c.green(url)} with a concurrency of ${
-				this.#queue.concurrency
-			}`,
+			`Started fetching ${c.green(url)} with a concurrency of ${this.#queue.concurrency}`,
 		);
 
-		await this.#fetchPage(url, {
-			skipMatch: true,
-		});
+		// Try to fetch from sitemap first if enabled
+		if (this.options.sitemap && !this.#shouldTerminateEarly()) {
+			await this.#fetchFromSitemap(url);
+		}
 
-		await this.#queue.onIdle();
+		if (!this.#shouldTerminateEarly()) {
+			await this.#fetchPage(url, {
+				skipMatch: true,
+			});
+		}
+
+		// Wait for queue to empty or timeout
+		const maxWaitTime = Math.max(
+			0,
+			this.#globalTimeoutMs - (Date.now() - this.#startTime),
+		);
+
+		if (maxWaitTime > 0) {
+			await Promise.race([
+				this.#queue.onIdle(),
+				new Promise((resolve) => setTimeout(resolve, maxWaitTime)),
+			]);
+		}
+
+		if (this.#shouldTerminateEarly()) {
+			logger.warn(
+				`Fetching terminated early after ${this.#globalTimeoutMs}ms. Fetched ${this.#pages.size} pages.`,
+			);
+		}
 
 		return this.#pages;
 	}
@@ -64,7 +277,11 @@ class Fetcher {
 	) {
 		const { host, pathname } = new URL(url);
 
-		if (this.#fetched.has(pathname) || this.#limitReached()) {
+		if (
+			this.#fetched.has(pathname) ||
+			this.#limitReached() ||
+			this.#shouldTerminateEarly()
+		) {
 			return;
 		}
 
@@ -75,6 +292,7 @@ class Fetcher {
 		if (
 			!options.skipMatch &&
 			this.options.match &&
+			this.options.match.length > 0 &&
 			!matchPath(pathname, this.options.match)
 		) {
 			return;
@@ -82,18 +300,49 @@ class Fetcher {
 
 		logger.info(`Fetching ${c.green(url)}`);
 
-		const res = await (this.options.fetch || fetch)(url, {
-			headers: {
-				"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
-			},
-		});
+		// Add timeout to prevent hanging on slow pages - use shorter timeout for faster processing
+		const controller = new AbortController();
+		const remainingTime = Math.max(
+			5000,
+			Math.max(0, this.#globalTimeoutMs - (Date.now() - this.#startTime)),
+		);
+		const pageTimeout = Math.min(15000, remainingTime); // Max 15 seconds per page
+		const timeoutId = setTimeout(() => controller.abort(), pageTimeout);
 
-		if (!res.ok) {
-			logger.warn(`Failed to fetch ${url}: ${res.statusText}`);
+		// Combine the page timeout with the global abort signal
+		const combinedController = new AbortController();
+		const handleAbort = () => combinedController.abort();
+
+		controller.signal.addEventListener("abort", handleAbort);
+		this.#abortSignal?.addEventListener("abort", handleAbort);
+
+		let res: Response;
+		try {
+			res = await (this.options.fetch || fetch)(url, {
+				headers: {
+					"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
+				},
+				signal: combinedController.signal,
+			});
+			clearTimeout(timeoutId);
+
+			if (!res.ok) {
+				logger.warn(`Failed to fetch ${url}: ${res.statusText}`);
+				return;
+			}
+		} catch (error) {
+			clearTimeout(timeoutId);
+			if (error instanceof Error && error.name === "AbortError") {
+				logger.warn(`Timeout fetching ${url}`);
+			} else {
+				logger.warn(
+					`Failed to fetch ${url}: ${error instanceof Error ? error.message : "Unknown error"}`,
+				);
+			}
 			return;
 		}
 
-		if (this.#limitReached()) {
+		if (this.#limitReached() || this.#shouldTerminateEarly()) {
 			return;
 		}
 
@@ -116,31 +365,40 @@ class Fetcher {
 		const $ = load(await res.text());
 		$("script,style,link,img,video").remove();
 
-		$("a").each((_, el) => {
-			const href = $(el).attr("href");
+		// Only process links if we have time remaining
+		if (!this.#shouldTerminateEarly()) {
+			$("a").each((_, el) => {
+				const href = $(el).attr("href");
 
-			if (!href) {
-				return;
-			}
-
-			try {
-				const thisUrl = new URL(href, url);
-				if (thisUrl.host !== host) {
+				if (!href) {
 					return;
 				}
 
-				extraUrls.push(thisUrl.href);
-			} catch {
-				logger.warn(`Failed to parse URL: ${href}`);
-			}
-		});
+				try {
+					const thisUrl = new URL(href, url);
+					if (thisUrl.host !== host) {
+						return;
+					}
 
-		if (extraUrls.length > 0) {
-			for (const url of extraUrls) {
-				this.#queue.add(() =>
-					this.#fetchPage(url, { ...options, skipMatch: false }),
-				);
+					extraUrls.push(thisUrl.href);
+				} catch {
+					logger.warn(`Failed to parse URL: ${href}`);
+				}
+			});
+
+			if (extraUrls.length > 0 && !this.#shouldTerminateEarly()) {
+				for (const url of extraUrls) {
+					this.#queue.add(() =>
+						this.#fetchPage(url, { ...options, skipMatch: false }),
+					);
+				}
 			}
+		}
+
+		// Skip content processing if we're running out of time
+		if (this.#shouldTerminateEarly()) {
+			logger.info(`Skipping content processing for ${pathname} due to timeout`);
+			return;
 		}
 
 		const window = new Window({
@@ -172,6 +430,12 @@ class Fetcher {
 		await window.happyDOM.close();
 
 		if (!article) {
+			return;
+		}
+
+		// Final check before processing content
+		if (this.#shouldTerminateEarly()) {
+			logger.info(`Skipping content conversion for ${pathname} due to timeout`);
 			return;
 		}
 
