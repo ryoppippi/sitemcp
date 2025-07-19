@@ -35,6 +35,11 @@ export type Options = {
 	 * Timeout in seconds for site fetching
 	 */
 	timeout?: number;
+
+	/**
+	 * Abort signal for cancelling fetch operations
+	 */
+	signal?: AbortSignal;
 };
 
 export type Page = {

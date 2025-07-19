@@ -119,3 +119,22 @@ export function sanitiseToolName(
 	const pascalizedName = pascalCase(name);
 	return pascalizedName;
 }
+
+/**
+ * Generate match pattern from base URL path
+ * @example
+ * - https://example.com => []
+ * - https://example.com/api/v1 => ["/api/v1/**"]
+ */
+export function generateMatchPatternFromUrl(url: string): string[] {
+	const { pathname } = new URL(url);
+
+	// If pathname is just "/" or empty, don't generate any pattern
+	if (pathname === "/" || pathname === "") {
+		return [];
+	}
+
+	// Remove trailing slash and add wildcard pattern
+	const normalizedPath = pathname.replace(/\/$/, "");
+	return [`${normalizedPath}/**`];
+}

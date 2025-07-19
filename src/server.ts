@@ -4,6 +4,7 @@ import { Worker } from "node:worker_threads";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { stringify } from "@std/yaml";
+import { createBirpc } from "birpc";
 import { z } from "zod";
 import { version } from "../package.json";
 import { logger } from "./logger.ts";
@@ -78,33 +79,43 @@ export async function startServer(
 				const workerPath = path.join(currentDir, workerFile);
 				worker = new Worker(workerPath);
 
-				const workerPromise = new Promise<FetchSiteResult>(
-					(resolve, reject) => {
-						worker?.on("message", (message) => {
-							switch (message.type) {
-								case "complete":
-									resolve(new Map(message.data));
-									break;
-								case "error":
-									reject(new Error(message.error));
-									break;
-								case "progress":
-									// Handle progress updates if needed
-									break;
-							}
-						});
-
-						worker?.on("error", reject);
-						worker?.on("exit", (code) => {
-							if (code !== 0) {
-								reject(new Error(`Worker stopped with exit code ${code}`));
-							}
-						});
+				// Create birpc instance for main thread
+				const rpc = createBirpc<{
+					startFetch: (
+						url: string,
+						options: {
+							concurrency?: number;
+							match?: string[];
+							contentSelector?: string;
+							limit?: number;
+							sitemap?: boolean | string;
+							timeout?: number;
+						},
+					) => Promise<
+						Array<[string, { title: string; url: string; content: string }]>
+					>;
+					abortFetch: () => void;
+				}>(
+					{},
+					{
+						post: (data) => worker?.postMessage(data),
+						on: (fn) => worker?.on("message", fn),
 					},
 				);
 
+				// Handle worker error and exit events
+				const workerErrorPromise = new Promise<never>((_, reject) => {
+					worker?.on("error", reject);
+					worker?.on("exit", (code) => {
+						if (code !== 0) {
+							reject(new Error(`Worker stopped with exit code ${code}`));
+						}
+					});
+				});
+
 				const timeoutPromise = new Promise<never>((_, reject) => {
 					setTimeout(() => {
+						rpc.abortFetch();
 						worker?.terminate();
 						const abortError = new Error(
 							`Site fetching for ${url} timed out after ${timeout ?? 60} seconds`,
@@ -114,25 +125,29 @@ export async function startServer(
 					}, timeoutMs);
 				});
 
-				// Start worker
-				worker.postMessage({
-					type: "start",
-					url,
-					options: {
-						concurrency,
-						match: (match && ensureArray(match)) as string[],
-						contentSelector,
-						limit,
-						sitemap,
-						timeout,
-					},
+				// Start fetch using birpc
+				const fetchPromise = rpc.startFetch(url, {
+					concurrency,
+					match: (match && ensureArray(match)) as string[],
+					contentSelector,
+					limit,
+					sitemap,
+					timeout,
 				});
 
-				const freshPages = await Promise.race([workerPromise, timeoutPromise]);
+				const dataArray = await Promise.race([
+					fetchPromise,
+					timeoutPromise,
+					workerErrorPromise,
+				]);
+				const freshPages = new Map(dataArray);
 
 				// Merge fresh pages with existing pages
 				for (const [key, value] of freshPages) {
-					pages.set(key, value);
+					pages.set(
+						key as string,
+						value as { title: string; url: string; content: string },
+					);
 				}
 
 				if (cache) {

@@ -6,7 +6,7 @@ import c from "picocolors";
 import { logger } from "./logger.ts";
 import { toMarkdown } from "./to-markdown.ts";
 import type { FetchSiteResult, Options } from "./types.ts";
-import { matchPath } from "./utils.ts";
+import { generateMatchPatternFromUrl, matchPath } from "./utils.ts";
 
 export async function fetchSite(
 	url: string,
@@ -23,12 +23,14 @@ class Fetcher {
 	#queue: Queue;
 	#startTime = 0;
 	#globalTimeoutMs: number;
+	#abortSignal?: AbortSignal;
 	options: Options;
 
 	constructor(options: Options) {
 		const concurrency = options.concurrency || 3;
 		this.#queue = new Queue({ concurrency });
 		this.options = options;
+		this.#abortSignal = options.signal;
 		this.#globalTimeoutMs = (options.timeout || 60) * 1000; // default 60 seconds
 	}
 
@@ -38,7 +40,7 @@ class Fetcher {
 
 	#shouldTerminateEarly() {
 		const elapsed = Date.now() - this.#startTime;
-		return elapsed >= this.#globalTimeoutMs;
+		return elapsed >= this.#globalTimeoutMs || this.#abortSignal?.aborted;
 	}
 
 	#getContentSelector(pathname: string) {
@@ -49,10 +51,14 @@ class Fetcher {
 	}
 
 	async #fetchFromSitemap(baseUrl: string) {
-		const { host } = new URL(baseUrl);
+		const { host, pathname } = new URL(baseUrl);
 		const sitemapUrls = await this.#discoverSitemapUrls(baseUrl);
 
 		logger.info(`Found ${sitemapUrls.length} sitemap(s) to process`);
+
+		// Generate base path pattern for filtering
+		const basePathPatterns = generateMatchPatternFromUrl(baseUrl);
+		const shouldFilterByBasePath = basePathPatterns.length > 0;
 
 		for (const sitemapUrl of sitemapUrls) {
 			try {
@@ -63,9 +69,22 @@ class Fetcher {
 					// Only process URLs from the same host
 					try {
 						const urlObj = new URL(url);
-						if (urlObj.host === host) {
-							this.#queue.add(() => this.#fetchPage(url, { skipMatch: false }));
+						if (urlObj.host !== host) {
+							continue;
 						}
+
+						// Filter by base path if the base URL has a specific path
+						if (shouldFilterByBasePath) {
+							const matchesBasePath = matchPath(
+								urlObj.pathname,
+								basePathPatterns,
+							);
+							if (!matchesBasePath) {
+								continue;
+							}
+						}
+
+						this.#queue.add(() => this.#fetchPage(url, { skipMatch: false }));
 					} catch {
 						logger.warn(`Invalid URL from sitemap: ${url}`);
 					}
@@ -97,6 +116,7 @@ class Fetcher {
 					headers: {
 						"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
 					},
+					signal: this.#abortSignal,
 				});
 
 				if (res.ok && res.headers.get("content-type")?.includes("xml")) {
@@ -116,6 +136,7 @@ class Fetcher {
 					headers: {
 						"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
 					},
+					signal: this.#abortSignal,
 				});
 
 				if (robotsRes.ok) {
@@ -148,6 +169,7 @@ class Fetcher {
 				headers: {
 					"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
 				},
+				signal: this.#abortSignal,
 			});
 
 			if (!res.ok) {
@@ -287,13 +309,20 @@ class Fetcher {
 		const pageTimeout = Math.min(15000, remainingTime); // Max 15 seconds per page
 		const timeoutId = setTimeout(() => controller.abort(), pageTimeout);
 
+		// Combine the page timeout with the global abort signal
+		const combinedController = new AbortController();
+		const handleAbort = () => combinedController.abort();
+
+		controller.signal.addEventListener("abort", handleAbort);
+		this.#abortSignal?.addEventListener("abort", handleAbort);
+
 		let res: Response;
 		try {
 			res = await (this.options.fetch || fetch)(url, {
 				headers: {
 					"user-agent": "SiteMCP (https://github.com/ryoppippi/sitemcp)",
 				},
-				signal: controller.signal,
+				signal: combinedController.signal,
 			});
 			clearTimeout(timeoutId);
 
