@@ -74,7 +74,8 @@ class Fetcher {
 		// we don't need to extract content for this page
 		if (
 			!options.skipMatch &&
-			this.options.match &&
+			this.options.match != null &&
+			this.options.match.length > 0 &&
 			!matchPath(pathname, this.options.match)
 		) {
 			return;
