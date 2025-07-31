@@ -168,7 +168,7 @@ class Fetcher {
 
 		await window.happyDOM.waitUntilComplete();
 
-		const article = new Readability(window.document as unknown).parse();
+		const article = new Readability(window.document).parse();
 
 		await window.happyDOM.close();
 
