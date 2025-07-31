@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": ["dist", "bin"]
+		"ignore": ["dist", "bin", ".claude"]
 	},
 	"formatter": {
 		"enabled": true,
