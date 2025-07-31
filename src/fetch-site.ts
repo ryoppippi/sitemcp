@@ -75,6 +75,7 @@ class Fetcher {
 		if (
 			!options.skipMatch &&
 			this.options.match &&
+			this.options.match.length > 0 &&
 			!matchPath(pathname, this.options.match)
 		) {
 			return;
