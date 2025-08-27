@@ -25,8 +25,8 @@
 	"author": "ryoppippi",
 	"license": "MIT",
 	"dependencies": {
+		"@mizchi/readability": "^0.7.7",
 		"@modelcontextprotocol/sdk": "^1.17.2",
-		"@mozilla/readability": "^0.5.0",
 		"cheerio": "^1.1.2",
 		"happy-dom": "^16.5.3",
 		"micromatch": "^4.0.8",
