@@ -1,5 +1,23 @@
 # SiteMCP
 
+> [!WARNING]
+> **This repository is archived.** Please read the notice below before using this project.
+
+## Archival Notice
+
+SiteMCP was created on 8 April 2025, in the very early days of the Model Context Protocol ([original tweet](https://x.com/ryoppippi/status/1909369320078999673), [introduction post, Japanese](https://ryoppippi.com/blog/2025-04-08-zenn-1eb7fbe9042a88-ja)). At the time, MCP was a brand-new concept, and passing documentation to AI assistants via an MCP server was one of the only practical options available. Claude Code was exclusively available under a usage-based plan and had not yet reached wide adoption — and features like skills did not yet exist. (For that reason, all the demos in this repository were recorded with Claude Code Desktop.)
+
+Back then, coding agents were far less capable and LLM-native web search was unreliable at best, so fetching an entire website and serving it through MCP was genuinely useful. SiteMCP was arguably one of the earliest and most practical ways to provide documentation to a local AI assistant.
+
+The landscape has since changed significantly. MCP itself went through a period of rapid growth followed by a correction, and the community converged on simpler, more efficient alternatives for static documentation: publishing docs as downloadable Markdown files, distributing them via npm packages, or falling back to web search as a last resort. In my view, using MCP to serve static documentation has become an anti-pattern — the overhead is simply not worth it. I wrote about this in detail on my blog:
+
+- [Why You Should Publish Docs on npm (English)](https://ryoppippi.com/blog/2025-12-14-publish-docs-on-npm-en)
+- [Why You Should Publish Docs on npm (Japanese)](https://ryoppippi.com/blog/2025-12-14-publish-docs-on-npm-ja)
+
+One year after its initial release, I have decided to archive SiteMCP. If you need to provide documentation to an AI assistant, please follow the guidance in my blog posts above and fetch documentation as statically as possible.
+
+---
+
 [![npm version](https://img.shields.io/npm/v/sitemcp?color=yellow)](https://npmjs.com/package/sitemcp)
 [![NPM Downloads](https://img.shields.io/npm/dy/sitemcp)](https://tanstack.com/stats/npm?packageGroups=%5B%7B%22packages%22:%5B%7B%22name%22:%22sitemcp%22%7D%5D%7D%5D&range=30-days&transform=none&binType=daily&showDataMode=all&height=400)
 
